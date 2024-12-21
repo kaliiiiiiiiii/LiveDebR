@@ -8,5 +8,5 @@ cd builder
 
 run
 ```bash
-./LiveDebR
+./debr debr -c config.json
 ```

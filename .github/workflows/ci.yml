@@ -33,7 +33,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: builder.tar.gz
+        file: out/builder.tar.gz
         asset_name: builder_linux_amd64.tar.gz
         tag: ${{ github.ref_name }}
         overwrite: true

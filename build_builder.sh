@@ -4,8 +4,8 @@
 cargo build --release
 
 # Create builder directory and copy the binary
-mkdir -p builder
-cp target/release/LiveDebR builder/
+mkdir -p out/builder
+cp target/release/debr out/builder/
 
 # Create tar.gz archive
-tar -czvf builder.tar.gz builder
+tar -czvf out/builder.tar.gz out/builder/
