@@ -1,4 +1,4 @@
-# BUsage
+# Usage
 
 download
 ```bash
