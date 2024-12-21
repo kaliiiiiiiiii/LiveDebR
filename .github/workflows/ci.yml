@@ -28,8 +28,8 @@ jobs:
 
     - name: Set up Rust environment
       run: |
-        # Manually source the cargo environment setup
-        source "$HOME/.cargo/env"
+        # Use . to source the cargo environment
+        . "$HOME/.cargo/env"  # This works in both sh and bash
         # Verify cargo is in the path by printing its version
         cargo --version
 
@@ -37,8 +37,8 @@ jobs:
       id: read_release
       shell: bash
       run: |
-        # Manually source the cargo environment
-        source "$HOME/.cargo/env"
+        # Use . to source the cargo environment
+        . "$HOME/.cargo/env"  # This works in both sh and bash
         # Read release.md
         r=$(cat release.md)
         # Replace {$tag} with the actual tag from the workflow
@@ -50,8 +50,8 @@ jobs:
 
     - name: Build builder
       run: |
-        # Manually source the cargo environment
-        source "$HOME/.cargo/env"
+        # Use . to source the cargo environment
+        . "$HOME/.cargo/env"  # This works in both sh and bash
         make builder  # Run make builder after installing dependencies
 
     - name: Upload release
