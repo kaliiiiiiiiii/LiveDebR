@@ -9,35 +9,37 @@ jobs:
   build:
     permissions:
       contents: write
-    name: Build
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3                         # Check out the repository first
-    - name: Read release.md and use it as the body of the new release
+    - uses: actions/checkout@v3
+    - name: Read release.md
       id: read_release
       shell: bash
       run: |
-        r=$(cat release.md)                              # Read release.md from the repo root
-        r="${r//'%'/'%25'}"                              # Escape %
-        r="${r//$'\n'/'%0A'}"                            # Escape newlines (\n)
-        r="${r//$'\r'/'%0D'}"                            # Escape carriage returns (\r)
-        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT         # Output the result to RELEASE_BODY
-    - name: Build the release binary
-      run: cargo build --release                        # Build your binary
-    - name: Create and zip the builder directory
+        # Read and replace tag placeholder in release.md
+        tag=${{ github.ref_name }}
+        r=$(cat release.md)
+        r="${r//\{\$tag\}/$tag}"  # Replace {$tag} with actual tag
+        r="${r//'%'/'%25'}"
+        r="${r//$'\n'/'%0A'}"
+        r="${r//$'\r'/'%0D'}"
+        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
+    - name: Build binary
+      run: cargo build --release
+    - name: Create tar.gz
       run: |
-        mkdir -p builder                                # Create the /builder directory
-        cp target/release/LiveDebR builder/            # Copy the binary to the directory
-        zip -r builder.zip builder                     # Zip the /builder directory
-    - name: Upload the builder archive
+        mkdir -p builder
+        cp target/release/LiveDebR builder/
+        tar -czvf builder.tar.gz builder
+    - name: Upload release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: builder.zip                              # Upload the zip file
-        asset_name: builder_linux_amd64.zip           # Name of the release asset
-        tag: ${{ github.ref_name }}                   # Use the tag name
-        overwrite: true                               # Allow overwriting if it already exists
-        prerelease: true                              # Mark the release as prerelease
-        make_latest: false                            # Do not mark as the latest release
-        body: ${{ steps.read_release.outputs.RELEASE_BODY }} # Use the body read from release.md
+        file: builder.tar.gz
+        asset_name: builder_linux_amd64.tar.gz
+        tag: ${{ github.ref_name }}
+        overwrite: true
+        prerelease: true
+        make_latest: false
+        body: ${{ steps.read_release.outputs.RELEASE_BODY }}
