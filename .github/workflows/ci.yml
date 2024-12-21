@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - uses: actions/checkout@v3                         # Check out the repository first
     - name: Read release.md and use it as the body of the new release
       id: read_release
       shell: bash
@@ -22,7 +23,6 @@ jobs:
         r="${r//$'\n'/'%0A'}"                            # Escape newlines (\n)
         r="${r//$'\r'/'%0D'}"                            # Escape carriage returns (\r)
         echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT         # Output the result to RELEASE_BODY
-    - uses: actions/checkout@v3                         # Check out the repository
     - name: Build the release binary
       run: cargo build --release                        # Build your binary
     - name: Create and zip the builder directory
