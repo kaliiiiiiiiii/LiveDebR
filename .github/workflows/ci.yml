@@ -26,11 +26,12 @@ jobs:
         # Install Rust via rustup (non-interactive with -y)
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-        # Add Rust's cargo binary directory to the PATH
-        echo "export PATH=\"$HOME/.cargo/bin:\$PATH\"" >> $GITHUB_ENV
-
-    - name: Check cargo installation
-      run: cargo --version  # Verify that cargo is properly installed and available
+    - name: Set up Rust environment
+      run: |
+        # Load the cargo binary path to the shell environment
+        echo "export PATH=\"$HOME/.cargo/bin:$PATH\"" >> $GITHUB_ENV
+        # Verify cargo is in the path by printing its version
+        cargo --version
 
     - name: Read release.md and replace {$tag} with actual tag
       id: read_release
