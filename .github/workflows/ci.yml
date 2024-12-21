@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build R
+      run: cargo build --release
+    - name: Upload binary builder
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: target/release/LiveDebR
+        asset_name: LiveDebR_linux_amd64
+        tag: ${{ github.ref }}
+        overwrite: true
+        prerelease: true
+        make_latest: false
+        body: "Test release"
