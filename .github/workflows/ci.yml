@@ -25,10 +25,8 @@ jobs:
         r="${r//$'\n'/'%0A'}"  # Escape newlines
         r="${r//$'\r'/'%0D'}"  # Escape carriage returns
         echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT  # Set environment variable for release body
-    - name: Run build_builder.sh
-      run: |
-        chmod +x build_builder.sh
-        ./build_builder.sh  # Run the build script
+    - name: build builder
+      run: make builder
     - name: Upload release
       uses: svenstaro/upload-release-action@v2
       with:

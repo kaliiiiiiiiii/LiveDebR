@@ -1,3 +1,5 @@
 /target
-builder*.tar.gz
 /out
+
+builder*.tar.gz
+config.json

@@ -1,9 +1,15 @@
 use clap::Parser;
+
 mod config_utils;
+mod bash;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    /// Flag to install dependencies
+    #[arg(long, help = "Install dependencies for LiveDebR")]
+    deps: bool,
+
     #[arg(
         short = 'c',
         long,
@@ -13,9 +19,12 @@ struct Args {
     config: String,
 }
 
-
 fn main() {
     let args = Args::parse();
+
+    if args.deps {
+        bash::install();
+    }
 
     let config_path = config_utils::find_config_path(&args.config).unwrap_or_else(|| {
         eprintln!("Error: Configuration file '{}' not found", args.config);
