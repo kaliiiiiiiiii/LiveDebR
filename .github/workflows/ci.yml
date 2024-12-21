@@ -17,11 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install dependencies (make, curl, Rust)
+    - name: Install dependencies (make, curl, Rust, build-essential)
       run: |
-        # Update package list and install make and curl
+        # Update package list and install necessary dependencies
         apt update
-        apt install -y make curl  # Install make and curl
+        apt install -y make curl build-essential  # Install make, curl, and build-essential (gcc/g++)
 
         # Install Rust via rustup (non-interactive with -y)
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
