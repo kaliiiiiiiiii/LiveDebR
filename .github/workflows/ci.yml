@@ -25,10 +25,6 @@ jobs:
         r="${r//$'\n'/'%0A'}"  # Escape newlines
         r="${r//$'\r'/'%0D'}"  # Escape carriage returns
         echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT  # Set environment variable for release body
-    - name: Set up Rust
-      uses: actions/setup-rust@v1
-      with:
-        toolchain: stable
     - name: Run build_builder.sh
       run: |
         chmod +x build_builder.sh
