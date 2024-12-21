@@ -26,12 +26,8 @@ jobs:
         # Install Rust via rustup (non-interactive with -y)
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
-        # Add Rust's cargo binary directory to the PATH
-        export PATH="$HOME/.cargo/bin:$PATH"
-        echo "Rust installed. Cargo is available at: $(which cargo)"
-
-        # Ensure cargo is available globally in the current shell
-        source $HOME/.cargo/env
+        # Add Rust's cargo binary directory to the PATH using bash
+        bash -c "source $HOME/.cargo/env"
 
     - name: Check cargo installation
       run: cargo --version  # Verify that cargo is properly installed and available
