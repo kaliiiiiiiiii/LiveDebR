@@ -11,7 +11,7 @@ builder:
 	cp target/release/debr $(OUT_DIR)/builder/
 	cp -r debr/assets $(OUT_DIR)/builder
 	cp -r debr/config.json $(OUT_DIR)/builder/config.json
-	tar -czvf $(OUT_DIR)/builder.tar.gz $(OUT_DIR)/builder/
+	tar -czvf $(OUT_DIR)/builder.tar.gz -C $(OUT_DIR) builder/
 
 clean:
 	@echo "cleaning build files"
