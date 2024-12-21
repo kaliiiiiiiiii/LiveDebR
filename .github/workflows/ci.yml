@@ -13,25 +13,26 @@ jobs:
     
     steps:
     - uses: actions/checkout@v3
-    - name: Read release.md
+    - name: Read release.md and replace {$tag} with actual tag
       id: read_release
       shell: bash
       run: |
-        # Read and replace tag placeholder in release.md
-        tag=${{ github.ref_name }}
+        # Read release.md
         r=$(cat release.md)
-        r="${r//\{\$tag\}/$tag}"  # Replace {$tag} with actual tag
-        r="${r//'%'/'%25'}"
-        r="${r//$'\n'/'%0A'}"
-        r="${r//$'\r'/'%0D'}"
-        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
-    - name: Build binary
-      run: cargo build --release
-    - name: Create tar.gz
+        # Replace {$tag} with the actual tag from the workflow
+        r="${r//\{\$tag\}/${{ github.ref_name }}}"
+        r="${r//'%'/'%25'}"  # Escape %
+        r="${r//$'\n'/'%0A'}"  # Escape newlines
+        r="${r//$'\r'/'%0D'}"  # Escape carriage returns
+        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT  # Set environment variable for release body
+    - name: Set up Rust
+      uses: actions/setup-rust@v1
+      with:
+        toolchain: stable
+    - name: Run build_builder.sh
       run: |
-        mkdir -p builder
-        cp target/release/LiveDebR builder/
-        tar -czvf builder.tar.gz builder
+        chmod +x build_builder.sh
+        ./build_builder.sh  # Run the build script
     - name: Upload release
       uses: svenstaro/upload-release-action@v2
       with:
@@ -42,4 +43,4 @@ jobs:
         overwrite: true
         prerelease: true
         make_latest: false
-        body: ${{ steps.read_release.outputs.RELEASE_BODY }}
+        body: ${{ steps.read_release.outputs.RELEASE_BODY }}  # Use the content of release.md as the body
