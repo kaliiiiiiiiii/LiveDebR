@@ -9,12 +9,24 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: ubuntu-latest  # Using an Ubuntu-based runner for execution
+    runs-on: ubuntu-latest  # Specify the host runner (Ubuntu) where the container will run
     container:
-      image: debian:latest  # Use Debian-based container for the environment
+      image: debian:latest  # Use the official Debian container
 
     steps:
     - uses: actions/checkout@v3
+
+    # Install dependencies (make, curl, and Rust)
+    - name: Install build dependencies (make, curl, and Rust)
+      run: |
+        # Update package list and install make and curl
+        apt update
+        apt install -y make curl  # Install make and curl
+
+        # Install Rust via rustup (non-interactive with -y)
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+    # Read release.md and replace {$tag} with actual tag
     - name: Read release.md and replace {$tag} with actual tag
       id: read_release
       shell: bash
@@ -27,14 +39,18 @@ jobs:
         r="${r//$'\n'/'%0A'}"  # Escape newlines
         r="${r//$'\r'/'%0D'}"  # Escape carriage returns
         echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT  # Set environment variable for release body
-    - name: build builder
-      run: make builder
+
+    # Build the builder (Makefile step)
+    - name: Build builder
+      run: make builder  # Run make builder after installing dependencies
+
+    # Upload the release
     - name: Upload release
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: out/builder.tar.gz
-        asset_name: builder_linux_amd64_deb.tar.gz
+        asset_name: builder_deb_linux_amd64.tar.gz  # Update the asset name to include "deb"
         tag: ${{ github.ref_name }}
         overwrite: true
         prerelease: true
