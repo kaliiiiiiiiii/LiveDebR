@@ -9,8 +9,10 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-latest  # Using an Ubuntu-based runner for execution
+    container:
+      image: debian:latest  # Use Debian-based container for the environment
+
     steps:
     - uses: actions/checkout@v3
     - name: Read release.md and replace {$tag} with actual tag
@@ -32,7 +34,7 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: out/builder.tar.gz
-        asset_name: builder_linux_amd64.tar.gz
+        asset_name: builder_linux_amd64_deb.tar.gz
         tag: ${{ github.ref_name }}
         overwrite: true
         prerelease: true
