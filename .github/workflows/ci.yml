@@ -13,6 +13,7 @@ jobs:
 
     container:
       image: debian:latest
+      options: --privileged
 
     steps:
     - uses: actions/checkout@v3
