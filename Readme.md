@@ -6,6 +6,7 @@
 
 
 # Building the builder
+only tested on debian
 
 install dependencies
 ```bash
@@ -13,7 +14,7 @@ install dependencies
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # other dependencies
-sudo apt install make
+sudo apt install make build-essential
 ```
 
 build

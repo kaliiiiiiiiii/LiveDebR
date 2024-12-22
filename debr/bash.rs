@@ -32,7 +32,7 @@ pub fn run_script<P: AsRef<Path>>(path: P) -> io::Result<()> {
     let status = child.wait()?;
 
     if !status.success() {
-        eprintln!("Error: Script execution failed with status {:?}", status.code());
+        eprintln!("Error: Script execution failed with {}", status.to_string());
         return Err(io::Error::new(io::ErrorKind::Other, "Script execution failed"));
     }
 
