@@ -9,50 +9,42 @@ jobs:
   build:
     permissions:
       contents: write
-    runs-on: ubuntu-latest  # Runs on Ubuntu but uses a Debian container
+    runs-on: ubuntu-latest
 
     container:
-      image: debian:latest  # Use the official Debian container
+      image: debian:latest
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install dependencies (make, curl, Rust, build-essential)
+    - name: Install dependencies (make, curl, Rust, build-essential, ntpdate)
       run: |
-        # Update package list and install necessary dependencies
         apt update
-        apt install -y make curl build-essential  # Install make, curl, and build-essential (gcc/g++)
+        apt install -y make curl build-essential ntpdate
+
+        # Sync the system clock to avoid clock skew
+        ntpdate -u pool.ntp.org
 
         # Install Rust via rustup (non-interactive with -y)
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
-    - name: Set up Rust environment
-      run: |
-        # Use . to source the cargo environment
-        . "$HOME/.cargo/env"  # This works in both sh and bash
-        # Verify cargo is in the path by printing its version
-        cargo --version
 
     - name: Read release.md and replace {$tag} with actual tag
       id: read_release
       shell: bash
       run: |
-        # Use . to source the cargo environment
-        . "$HOME/.cargo/env"  # This works in both sh and bash
-        # Read release.md
         r=$(cat release.md)
         # Replace {$tag} with the actual tag from the workflow
         r="${r//\{\$tag\}/${{ github.ref_name }}}"
         r="${r//'%'/'%25'}"  # Escape %
         r="${r//$'\n'/'%0A'}"  # Escape newlines
         r="${r//$'\r'/'%0D'}"  # Escape carriage returns
-        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT  # Set environment variable for release body
+        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
 
     - name: Build builder
       run: |
         # Use . to source the cargo environment
         . "$HOME/.cargo/env"  # This works in both sh and bash
-        make builder  # Run make builder after installing dependencies
+        make builder
 
     - name: Upload release
       uses: svenstaro/upload-release-action@v2
