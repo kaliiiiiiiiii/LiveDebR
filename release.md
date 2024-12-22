@@ -9,5 +9,5 @@ cd builder
 
 run
 ```bash
-./debr --deps
+sudo ./debr deps
 ```

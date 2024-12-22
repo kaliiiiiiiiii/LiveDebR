@@ -1,8 +1,36 @@
+# Live Debian Build Rust
+Build debian live based on a json config with rust
+
 # Building
 
-1. Download and extract the **builder** from [releases](https://github.com/kaliiiiiiiiii/LiveDebR/releases/latest)
-2. Install dependencies with `./debr --debs`
-3. Build image with `./debr -c config.json -o debian_amd64.iso` 
+Installation
+```bash
+curl -L -o builder_linux_amd64_deb.tar.gz https://github.com/kaliiiiiiiiii/LiveDebR/releases/latest/download/builder_linux_amd64_deb.tar.gz
+tar -xzvf builder_linux_amd64_deb.tar.gz
+cd builder
+```
+
+## Usage
+```
+Usage: debr [OPTIONS] [COMMAND]
+
+Commands:
+  deps    Install dependencies
+  config  Initialize build
+  clean   Clean build
+  build   Build live
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --config <CONFIG>    Path to the configuration file [default: config.json]
+  -o, --out-dir <OUT_DIR>  Path for the live-debian-build to use [default: out]
+  -h, --help               Print help
+  -V, --version            Print version
+```
+
+where config should be in the form [debr/config.json](https://github.com/kaliiiiiiiiii/LiveDebR/blob/main/debr/config.json)
+
+The builded images can then be found under `out-dir/live` 
 
 
 # Building the builder

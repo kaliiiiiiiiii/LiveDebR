@@ -2,4 +2,4 @@
 /out
 
 builder*.tar.gz
-.config.json
+help_output.txt

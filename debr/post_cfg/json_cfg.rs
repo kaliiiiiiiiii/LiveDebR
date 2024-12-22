@@ -4,10 +4,31 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
+fn s(_s:&str)-> String {_s.to_string()}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Config {
+    #[serde(default = "Defaults::chrome")]
     pub chrome: bool,
+    #[serde(default = "Defaults::apt")]
+    pub apt: String,
+    #[serde(default = "Defaults::dist")]
+    pub dist: String,
+    #[serde(default = "Defaults::arch")]
+    pub arch: String,
+    #[serde(default = "Defaults::add_non_free")]
+    pub add_non_free: bool,
+}
+
+//redundancy :( - see  https://github.com/serde-rs/serde/issues/368
+pub struct Defaults;
+impl Defaults {
+    pub fn chrome() -> bool {true}
+    pub fn apt() -> String {s("apt")}
+    pub fn dist() -> String {s("bullseye")}
+    pub fn arch() -> String {s("amd64")}
+    pub fn add_non_free() -> bool {true}
 }
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {
@@ -20,7 +41,7 @@ pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {
     let file = File::open(&path)?;
     let reader = BufReader::new(file);
 
-    let config = serde_json::from_reader(reader)?;
+    let config: Config = serde_json::from_reader(reader)?;
     Ok(config)
 }
 
