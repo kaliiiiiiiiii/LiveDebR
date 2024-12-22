@@ -42,15 +42,29 @@ jobs:
         # Use . to source the cargo environment
         . "$HOME/.cargo/env"  # This works in both sh and bash
         make builder
-
-    - name: Upload release
+    - name: Upload builder
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: out/builder.tar.gz
-        asset_name: builder_linux_amd64_deb.tar.gz  # Update the asset name to include "deb"
+        asset_name: builder_linux_amd64_deb.tar.gz 
         tag: ${{ github.ref_name }}
         overwrite: true
         prerelease: true
-        make_latest: false
-        body: ${{ steps.read_release.outputs.RELEASE_BODY }}  # Use the content of release.md as the body
+        make_latest: true
+        body: ${{ steps.read_release.outputs.RELEASE_BODY }}
+    - name: Build iso
+      run: |
+        make build
+        gzip -c out/live/live-image-amd64.hybrid.iso > out/live-image-amd64.hybrid.iso.gz
+    - name: Upload build
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: out/live-image-amd64.hybrid.iso.gz
+        asset_name: live-image-amd64.hybrid.iso.gz
+        tag: ${{ github.ref_name }}
+        overwrite: true
+        prerelease: true
+        make_latest: true
+        body: ${{ steps.read_release.outputs.RELEASE_BODY }}

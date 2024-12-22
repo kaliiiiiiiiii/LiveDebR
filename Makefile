@@ -14,6 +14,12 @@ builder:
 	cp -r debr/config.json $(OUT_DIR)/builder/config.json
 	tar -czvf $(OUT_DIR)/builder.tar.gz -C $(OUT_DIR) builder/
 
+build:
+	@echo building .iso
+	$(OUT_DIR)/builder/debr deps
+	$(OUT_DIR)/builder/debr config
+	$(OUT_DIR)/builder/debr build
+
 clean:
 	@echo "cleaning build files"
 	rm -rf builder*.tar.gz target/ config.json

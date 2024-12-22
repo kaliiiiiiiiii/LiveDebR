@@ -10,6 +10,12 @@ tar -xzvf builder_linux_amd64_deb.tar.gz
 cd builder
 ```
 
+download build from releases
+```bash
+curl -L -o live-image-amd64.hybrid.iso.gz https://github.com/kaliiiiiiiiii/LiveDebR/releases/latest/download/live-image-amd64.hybrid.iso.gz
+gunzip live-image-amd64.hybrid.iso.gz
+```
+
 ## Usage
 ```
 Usage: debr [OPTIONS] [COMMAND]
