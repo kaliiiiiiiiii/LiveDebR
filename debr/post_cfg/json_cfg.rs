@@ -19,6 +19,10 @@ pub struct Config {
     pub arch: String,
     #[serde(default = "Defaults::add_non_free")]
     pub add_non_free: bool,
+    #[serde(default = "Defaults::gnome")]
+    pub gnome: bool,
+    #[serde(default = "Defaults::lang")]
+    pub lang: String,
 }
 
 //redundancy :( - see  https://github.com/serde-rs/serde/issues/368
@@ -29,6 +33,8 @@ impl Defaults {
     pub fn dist() -> String {s("bullseye")}
     pub fn arch() -> String {s("amd64")}
     pub fn add_non_free() -> bool {true}
+    pub fn gnome() -> bool {true}
+    pub fn lang() -> String {s("en")}
 }
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {

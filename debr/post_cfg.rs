@@ -47,9 +47,27 @@ pub fn apply(args: &Args, live_dir: &Path) {
     // Add non-free
     let non_free_path = live_dir.join("config/archives/non_free.list.chroot");
     if config.add_non_free {
-        copy(dir.join("assets/non_free.list.chroot"), &non_free_path).unwrap();
+        copy(dir.join(format!("assets/non_free_list/{}.non_free.list.chroot",dist)), &non_free_path)
+        .expect(format!("non_free.list.chroot not available for distribution: {}",dist).as_str());
     } else {
         remove_file(&non_free_path).ok();
+    }
+
+    let desktop_list = live_dir.join("config/package-lists/desktop.list.chroot");
+    let standard_list = live_dir.join("config/package-lists/standard.list.chroot");
+    let installer_list = live_dir.join("config/package-lists/installer.list.chroot");
+
+    let desktop_content = "task-gnome-desktop";
+    let standard_content = "! Packages Priority standard";
+    let installer_content = "debian-installer-launcher";
+    if config.gnome{
+        cfg_parser::add(desktop_content, desktop_list.as_path()).unwrap();
+        cfg_parser::add(standard_content, standard_list.as_path()).unwrap();
+        cfg_parser::add(installer_content, installer_list.as_path()).unwrap();
+    }else{
+        cfg_parser::strip(desktop_content, desktop_list.as_path()).unwrap();
+        cfg_parser::strip(standard_content, standard_list.as_path()).unwrap();
+        cfg_parser::strip(installer_content, installer_list.as_path()).unwrap();
     }
 
     // Chrome configuration

@@ -2,6 +2,8 @@
 "Chrome":true, 
 "Apt":"apt",
 "AddNonFree":true,
-"Dist":"bullseye",
-"Arch":"amd64"
+"Dist":"bookworm",
+"Arch":"amd64",
+"Gnome":true,
+"Lang":"en"
 }

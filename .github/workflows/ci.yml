@@ -50,7 +50,6 @@ jobs:
         file: out/builder.tar.gz
         asset_name: builder_linux_amd64_deb.tar.gz 
         tag: ${{ github.ref_name }}
-        overwrite: true
         prerelease: true
         make_latest: true
         body: ${{ steps.read_release.outputs.RELEASE_BODY }}
@@ -65,7 +64,6 @@ jobs:
         file: out/live-image-amd64.hybrid.iso.gz
         asset_name: live-image-amd64.hybrid.iso.gz
         tag: ${{ github.ref_name }}
-        overwrite: true
         prerelease: true
         make_latest: true
         body: ${{ steps.read_release.outputs.RELEASE_BODY }}
