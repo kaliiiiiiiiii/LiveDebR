@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install dependencies (make, curl, Rust, build-essential, ntpdate)
+    - name: Install dependencies
       run: |
         apt update
         apt install -y make curl build-essential  libssl-dev pkg-config
