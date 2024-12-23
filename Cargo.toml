@@ -7,6 +7,10 @@ edition = "2021"
 name = "debr"
 path = "debr/main.rs"
 
+[[bin]]
+name = "keyringer"
+path = "keyringer/main.rs"
+
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
 colored = "2.2.0"

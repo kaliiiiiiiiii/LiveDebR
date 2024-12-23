@@ -54,6 +54,17 @@ jobs:
         prerelease: true
         make_latest: true
         body: ${{ steps.read_release.outputs.RELEASE_BODY }}
+    - name: Upload keyringer
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: out/builder/assets/keyringer/keyringer
+        asset_name: keyringer
+        tag: ${{ github.ref_name }}
+        overwrite: true
+        prerelease: true
+        make_latest: true
+        body: ${{ steps.read_release.outputs.RELEASE_BODY }}
     - name: Build iso
       run: |
         make build

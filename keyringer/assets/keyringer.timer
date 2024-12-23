@@ -1,0 +1,10 @@
+[Unit]
+Description=Run KeyRinger Service Daily
+
+[Timer]
+OnCalendar=daily
+Unit=keyringer.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target
