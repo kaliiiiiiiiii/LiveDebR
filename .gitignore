@@ -3,3 +3,4 @@
 
 builder*.tar.gz
 help_output.txt
+.Cargo.lock

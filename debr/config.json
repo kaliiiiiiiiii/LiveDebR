@@ -1,9 +1,10 @@
 {
-"Chrome":true, 
 "Apt":"apt",
 "AddNonFree":true,
+"Chrome":true,
 "Dist":"bookworm",
 "Arch":"amd64",
 "Gnome":true,
-"Lang":"en"
+"Lang":"en",
+"Include":[]
 }

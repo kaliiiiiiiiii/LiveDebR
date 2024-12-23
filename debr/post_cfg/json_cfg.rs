@@ -1,16 +1,17 @@
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
-fn s(_s:&str)-> String {_s.to_string()}
+pub fn s(_s: &str) -> String {
+    _s.to_string()
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Config {
-    #[serde(default = "Defaults::chrome")]
-    pub chrome: bool,
     #[serde(default = "Defaults::apt")]
     pub apt: String,
     #[serde(default = "Defaults::dist")]
@@ -19,22 +20,47 @@ pub struct Config {
     pub arch: String,
     #[serde(default = "Defaults::add_non_free")]
     pub add_non_free: bool,
+    #[serde(default = "Defaults::chrome")]
+    pub chrome: bool,
     #[serde(default = "Defaults::gnome")]
     pub gnome: bool,
     #[serde(default = "Defaults::lang")]
     pub lang: String,
+    #[serde(default = "Defaults::include")]
+    pub include: HashSet<String>,
+    #[serde(default = "Defaults::exclude")]
+    pub exclude: HashSet<String>,
 }
 
-//redundancy :( - see  https://github.com/serde-rs/serde/issues/368
 pub struct Defaults;
 impl Defaults {
-    pub fn chrome() -> bool {true}
-    pub fn apt() -> String {s("apt")}
-    pub fn dist() -> String {s("bullseye")}
-    pub fn arch() -> String {s("amd64")}
-    pub fn add_non_free() -> bool {true}
-    pub fn gnome() -> bool {true}
-    pub fn lang() -> String {s("en")}
+    pub fn apt() -> String {
+        s("apt")
+    }
+    pub fn dist() -> String {
+        s("bullseye")
+    }
+    pub fn arch() -> String {
+        s("amd64")
+    }
+    pub fn add_non_free() -> bool {
+        true
+    }
+    pub fn chrome() -> bool {
+        true
+    }
+    pub fn gnome() -> bool {
+        true
+    }
+    pub fn lang() -> String {
+        s("en")
+    }
+    pub fn include() -> HashSet<String> {
+        HashSet::new()
+    }
+    pub fn exclude() -> HashSet<String> {
+        HashSet::new()
+    }
 }
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {

@@ -48,7 +48,7 @@ install dependencies
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # other dependencies
-sudo apt install make build-essential
+sudo apt install make build-essential libssl-dev pkg-config
 ```
 
 build

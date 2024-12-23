@@ -23,7 +23,9 @@ build:
 clean:
 	@echo "cleaning build files"
 	rm -rf builder*.tar.gz target/ config.json
-
+clean-config:
+	@echo "cleaning all build and out files"
+	rm -rf $(OUT_DIR)/live/config
 clean-all:
 	@echo "cleaning all build and out files"
 	rm -rf builder*.tar.gz target/ $(OUT_DIR)/ config.json
