@@ -213,7 +213,7 @@ fn dearmor_to(input: &[u8], output_path: &Path) -> Result<(), Box<dyn Error>> {
     let mut file = fs::File::create(output_path)?;
     file.write_all(&output.stdout)?;
 
-    info(&format!("Processed key and saved: {}", output_path.display()));
+    info(&format!("Updated keyring: {}", output_path.display()));
     Ok(())
 }
 

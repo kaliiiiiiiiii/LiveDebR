@@ -10,7 +10,7 @@ pub fn s(_s: &str) -> String {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     #[serde(default = "Defaults::apt")]
     pub apt: String,
@@ -30,37 +30,30 @@ pub struct Config {
     pub include: HashSet<String>,
     #[serde(default = "Defaults::exclude")]
     pub exclude: HashSet<String>,
+    #[serde(default)]
+    pub extras: Vec<ExtraConfig>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExtraConfig {
+    pub name: String,
+    pub key: String,
+    pub src: String,
+    pub repo: Vec<String>,
 }
 
 pub struct Defaults;
 impl Defaults {
-    pub fn apt() -> String {
-        s("apt")
-    }
-    pub fn dist() -> String {
-        s("bullseye")
-    }
-    pub fn arch() -> String {
-        s("amd64")
-    }
-    pub fn add_non_free() -> bool {
-        true
-    }
-    pub fn chrome() -> bool {
-        true
-    }
-    pub fn gnome() -> bool {
-        true
-    }
-    pub fn lang() -> String {
-        s("en")
-    }
-    pub fn include() -> HashSet<String> {
-        HashSet::new()
-    }
-    pub fn exclude() -> HashSet<String> {
-        HashSet::new()
-    }
+    pub fn apt() -> String {s("apt")}
+    pub fn dist() -> String {s("bullseye")}
+    pub fn arch() -> String {s("amd64")}
+    pub fn add_non_free() -> bool {true}
+    pub fn chrome() -> bool {true}
+    pub fn gnome() -> bool {true}
+    pub fn lang() -> String {s("en")}
+    pub fn include() -> HashSet<String> {HashSet::new()}
+    pub fn exclude() -> HashSet<String> {HashSet::new()}
 }
 
 pub fn read_config<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {

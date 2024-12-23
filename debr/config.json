@@ -1,10 +1,18 @@
 {
-"Apt":"apt",
-"AddNonFree":true,
-"Chrome":true,
-"Dist":"bookworm",
-"Arch":"amd64",
-"Gnome":true,
-"Lang":"en",
-"Include":[]
+"apt":"apt",
+"addNonFree":true,
+"chrome":true,
+"dist":"bookworm",
+"arch":"amd64",
+"gnome":true,
+"lang":"en",
+"include":[],
+"extras":[
+    {
+    "name":"microsoft-archive-keyring",
+    "key":"https://packages.microsoft.com/keys/microsoft.asc",
+    "src":"https://packages.microsoft.com/repos/code stable main",
+    "repo":["code"]
+    }
+]
 }

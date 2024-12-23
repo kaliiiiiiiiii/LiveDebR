@@ -4,12 +4,12 @@ version = "0.0.1"
 edition = "2021"
 
 [[bin]]
-name = "debr"
-path = "debr/main.rs"
-
-[[bin]]
 name = "keyringer"
 path = "keyringer/main.rs"
+
+[[bin]]
+name = "debr"
+path = "debr/main.rs"
 
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
