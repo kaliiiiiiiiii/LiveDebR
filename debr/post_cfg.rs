@@ -1,9 +1,6 @@
 use std::env;
-use std::fmt::format;
-use std::fs::{copy, create_dir_all, File, Permissions};
-use std::io::Write;
+use std::fs::copy;
 use std::path::Path;
-use std::os::unix::fs::PermissionsExt;  // For chmod functionality
 mod cfg_parser;
 mod json_cfg;
 mod sign;
