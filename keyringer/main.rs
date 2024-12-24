@@ -1,28 +1,42 @@
-use clap::{Parser, Subcommand};
 use std::os::unix::process::CommandExt;
 use std::error::Error;
-use std::fs::{create_dir_all, remove_file, set_permissions};
-use std::fs;
+use std::fs::{read, write, copy, File,create_dir_all, remove_file, set_permissions};
 use std::io::{Read, Write, stdout, stderr};
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::env::current_exe;
 use std::collections::HashMap;
-use reqwest::blocking::ClientBuilder;
-use serde_json::{Value, json};
+use std::io::{self, ErrorKind};
+
+use clap::{Parser, Subcommand};
+use serde_json::Value;
+
+mod ringer;
+mod  systemctl;
 
 const CONFIG_FILE: &str = "/etc/keyringer/keyrings.json";
-const KEYRINGS_DIR: &str = "/etc/apt/keyrings";
+pub const KEYRINGS_DIR: &str = "/etc/apt/keyrings";
 const BIN_DIR: &str = "/usr/local/bin";
 const SERVICE_FILE: &str = "/etc/systemd/system/keyringer.service";
 const TIMER_FILE: &str = "/etc/systemd/system/keyringer.timer";
+
+const HELP_ABOUT: &str = r#"Manages keyrings for APT
+
+Configuration:
+  Place a configuration file at `/etc/keyringer/keyrings.json` with the following format:
+
+  {
+      "microsoft-archive-keyring": "https://packages.microsoft.com/keys/microsoft.asc",
+      "google-chrome": "https://dl.google.com/linux/linux_signing_key.pub"
+  }
+"#;
 
 #[derive(Parser)]
 #[command(name = "keyringer")]
 #[command(author = "Aurin Aegerter")]
 #[command(version = "1.0")]
-#[command(about = "Manage keyrings for APT")]
+#[command(about = HELP_ABOUT)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
@@ -30,7 +44,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Uninstall keyringer and remove keyrings
+    /// Uninstall keyringer, remove keyrings and keyrings.json
     Uninstall,
 }
 
@@ -42,6 +56,56 @@ fn main() -> Result<(), Box<dyn Error>> {
         None => install()?,
     }
 
+    Ok(())
+}
+
+
+fn install() -> Result<(), Box<dyn Error>> {
+    // Install executable
+    let bin_path = &Path::new(BIN_DIR).join("keyringer");
+    let target_bin = &current_exe()?;
+    if target_bin != bin_path {
+        copy(target_bin.as_path(), bin_path)?;
+        set_permissions(bin_path, PermissionsExt::from_mode(0o755))?;
+        info(&format!("Installed executable to {}", bin_path.display()));
+    }
+
+    let mut files_written = false;
+
+    let service_content = include_bytes!("../keyringer/assets/keyringer.service");
+    let timer_content = include_bytes!("../keyringer/assets/keyringer.timer");
+
+    // Check and write service
+    let current_service_content = read(SERVICE_FILE).unwrap_or_default();
+    if service_content != current_service_content.as_slice() {
+        write(SERVICE_FILE, service_content)?;
+        set_permissions(SERVICE_FILE, PermissionsExt::from_mode(0o644))?;
+        info(&format!("Installed service {}", SERVICE_FILE));
+        files_written = true;
+    }
+
+    // Check and write timer
+    let current_timer_content = read(TIMER_FILE).unwrap_or_default();
+    if timer_content != current_timer_content.as_slice() {
+        write(TIMER_FILE, timer_content)?;
+        set_permissions(TIMER_FILE, PermissionsExt::from_mode(0o644))?;
+        info(&format!("Installed timer {}", TIMER_FILE));
+        files_written = true;
+    }
+
+    // Reload systemd if files were written
+    if files_written {systemctl::daemon_reload()?;}
+
+    // Start and enable service and timer if updated
+    if service_content != current_service_content.as_slice() {
+        systemctl::init("keyringer.service")?;
+    }
+    if timer_content != current_timer_content.as_slice() {
+        systemctl::init("keyringer.timer")?;
+    }
+
+    let keyrings = load_cfg(CONFIG_FILE)?;
+    ringer::update_keyrings(keyrings)?;
     Ok(())
 }
 
@@ -72,7 +136,7 @@ fn uninstall() -> Result<(), Box<dyn Error>> {
         info(&format!("Removed keyrings.json: {}", CONFIG_FILE));
     }
 
-    daemon_reload().ok();
+    systemctl::daemon_reload().ok();
 
     // Detach process for delayed binary removal
     if bin_path.exists() {
@@ -97,152 +161,6 @@ fn uninstall() -> Result<(), Box<dyn Error>> {
 }
 
 
-fn install() -> Result<(), Box<dyn Error>> {
-    // Install executable
-    let bin_path = &Path::new(BIN_DIR).join("keyringer");
-    let target_bin = &current_exe()?;
-    if target_bin != bin_path {
-        fs::copy(target_bin.as_path(), bin_path)?;
-        set_permissions(bin_path, PermissionsExt::from_mode(0o755))?;
-        info(&format!("Installed executable to {}", bin_path.as_path().display()));
-    }
-
-    let mut files_written = false;
-
-    let service_content = include_bytes!("../keyringer/assets/keyringer.service");
-    let timer_content = include_bytes!("../keyringer/assets/keyringer.timer");
-
-    // Check and write service
-    let current_service_content = fs::read(SERVICE_FILE).unwrap_or_default();
-    if service_content != current_service_content.as_slice() {
-        fs::write(SERVICE_FILE, service_content)?;
-        set_permissions(SERVICE_FILE, PermissionsExt::from_mode(0o644))?;
-        info(&format!("Installed service {}", SERVICE_FILE));
-        files_written = true;
-    }
-
-    // Check and write timer
-    let current_timer_content = fs::read(TIMER_FILE).unwrap_or_default();
-    if timer_content != current_timer_content.as_slice() {
-        fs::write(TIMER_FILE, timer_content)?;
-        set_permissions(TIMER_FILE, PermissionsExt::from_mode(0o644))?;
-        info(&format!("Installed timer {}", TIMER_FILE));
-        files_written = true;
-    }
-
-    // Reload systemd if files were written
-    if files_written {daemon_reload()?;}
-
-    // Start and enable service and timer if updated
-    if service_content != current_service_content.as_slice() {
-        init("keyringer.service")?;
-    }
-    if timer_content != current_timer_content.as_slice() {
-        init("keyringer.timer")?;
-    }
-
-    update_keyrings()?;
-    Ok(())
-}
-
-fn update_keyrings() -> Result<(), Box<dyn Error>> {
-    let keyrings = load_cfg(CONFIG_FILE)?;
-    let keyrings_dir = Path::new(KEYRINGS_DIR);
-
-    // Ensure directory exists
-    if !keyrings_dir.exists() {
-        create_dir_all(keyrings_dir)?;
-        set_permissions(keyrings_dir, PermissionsExt::from_mode(0o755))?;
-        info(&format!("Created directory: {}", keyrings_dir.display()));
-    }
-
-    let client = ClientBuilder::new()
-        .https_only(true)
-        .build()?;
-
-    for (file_name, url) in keyrings {
-        // Validate URL
-        if !url.starts_with("https://") {
-            error(&format!("Invalid URL (not HTTPS): {}", url));
-            continue;
-        }
-
-        // Fetch key
-        let response = client.get(&url).send()?;
-        if !response.status().is_success() {
-            error(&format!("Failed to fetch key from {}: {}", url, response.status()));
-            continue;
-        }
-
-        // Get raw key
-        let key_data = response.bytes()?;
-
-        // Dearmor & write
-        let output_path = keyrings_dir.join(format!("{}.gpg", file_name));
-        if let Err(e) = dearmor_to(&key_data, &output_path) {
-            error(&format!("Failed to dearmor key for {}: {}", file_name, e));
-        }
-    }
-
-    Ok(())
-}
-
-fn dearmor_to(input: &[u8], output_path: &Path) -> Result<(), Box<dyn Error>> {
-    // Start GPG
-    let mut child = Command::new("gpg")
-        .arg("--yes")
-        .arg("--dearmor")
-        .stdin(Stdio::piped())  // Pipe input
-        .stdout(Stdio::piped()) // Capture output
-        .spawn()?;
-
-    // Write data
-    if let Some(stdin) = &mut child.stdin {
-        stdin.write_all(input)?;
-    }
-
-    // Capture output
-    let output = child.wait_with_output()?;
-
-    if !output.status.success() {
-        error(&format!("GPG dearmor failed: {}", output.status));
-        return Err(format!("gpg --dearmor failed with status: {}", output.status).into());
-    }
-
-    // Write output
-    let mut file = fs::File::create(output_path)?;
-    file.write_all(&output.stdout)?;
-
-    info(&format!("Updated keyring: {}", output_path.display()));
-    Ok(())
-}
-
-fn init(name: &str) -> Result<(), Box<dyn Error>> {
-    // Enable and start service or timer
-    Command::new("systemctl")
-        .arg("enable")
-        .arg(name)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn()?;
-    Command::new("systemctl")
-        .arg("start")
-        .arg(name)
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .spawn()?;
-
-    Ok(())
-}
-
-fn daemon_reload() -> Result<(), Box<dyn Error>>{
-    Command::new("systemctl")
-            .arg("daemon-reload")
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .spawn()?;
-    Ok(())
-}
 
 fn load_cfg(config_path: &str) -> Result<HashMap<String, String>, Box<dyn Error>> {
     let config_path = Path::new(config_path);
@@ -256,15 +174,14 @@ fn load_cfg(config_path: &str) -> Result<HashMap<String, String>, Box<dyn Error>
 
     // Ensure config file
     if !config_path.exists() {
-        let default_data = json!({});
-        let mut file = fs::File::create(config_path)?;
-        file.write_all(default_data.to_string().as_bytes())?;
+        let mut file = File::create(config_path)?;
+        file.write_all(b"{}")?;
         set_permissions(config_path, PermissionsExt::from_mode(0o644))?;
         info(&format!("Created empty config file: {}", config_path.display()));
     }
 
     // Read config
-    let mut file = fs::File::open(config_path)?;
+    let mut file = File::open(config_path)?;
     let mut data = String::new();
     file.read_to_string(&mut data)?;
 
@@ -283,26 +200,30 @@ fn load_cfg(config_path: &str) -> Result<HashMap<String, String>, Box<dyn Error>
                     }
                 }
             } else {
-                error(&format!("Config file at {} does not contain valid JSON objects.", config_path.display()));
-                return Err("Invalid config format".into());
+                return Err(Box::new(io::Error::new(
+                    ErrorKind::InvalidData,
+                    format!("Config file at {} does not contain valid JSON objects.", config_path.display())
+                )));
             }
 
             Ok(keyrings)
         }
         Err(e) => {
-            error(&format!("Failed to parse config file at {}: {}", config_path.display(), e));
+            let error_msg = format!("Config file at {} does not contain valid JSON objects.", CONFIG_FILE);
             if e.to_string().contains("trailing characters") {
-                error("Ensure the JSON config is properly formatted without extra commas or characters.");
+                return Err(Box::new(io::Error::new(ErrorKind::InvalidData, error_msg)));
+            } else {
+                return Err(e.into());
             }
-            Err(e.into())
         }
     }
 }
 
-fn info(message: &str) {
+
+pub fn info(message: &str) {
     let _ = writeln!(stdout(), "INFO: {}", message);
 }
 
-fn error(message: &str) {
+pub fn error(message: &str) {
     let _ = writeln!(stderr(), "ERROR: {}", message);
 }

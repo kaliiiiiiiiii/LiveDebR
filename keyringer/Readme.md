@@ -14,7 +14,7 @@ place a configuration at `/etc/keyringer/keyrings.json`
 the files then will be placed in `/etc/apt/keyrings" (here: `microsoft-archive-keyring.gpg` and  `google-chrome.gpg`)
 
 #### uninstallation
-uninstalls keyringer and keyrings in configuration
+uninstalls keyringer, keyrings and keyrings.json
 
 ```bash
 keyringer uninstall

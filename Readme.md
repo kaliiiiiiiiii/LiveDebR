@@ -34,7 +34,7 @@ Options:
   -V, --version            Print version
 ```
 
-where config should be in the form [debr/config.json](https://github.com/kaliiiiiiiiii/LiveDebR/blob/main/debr/config.json)
+where config should be in the form [config.json](https://github.com/kaliiiiiiiiii/LiveDebR/blob/main/config.json)
 
 The builded images can then be found under `out-dir/live` 
 
