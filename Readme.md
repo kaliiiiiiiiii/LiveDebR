@@ -21,11 +21,13 @@ gunzip live-image-amd64.hybrid.iso.gz
 Usage: debr [OPTIONS] [COMMAND]
 
 Commands:
-  deps    Install dependencies
-  config  Initialize build
-  clean   Clean build
-  build   Build live
-  help    Print this message or the help of the given subcommand(s)
+  deps          Install dependencies
+  config        Initialize build
+  build         Build live debian
+  lb            Drop-in replacement for the lb command
+  clean         Clean all build files except of cache
+  clean-chroot  Only clean chroot
+  help          Print this message or the help of the given subcommand(s)
 
 Options:
   -c, --config <CONFIG>    Path to the configuration file [default: config.json]
@@ -48,7 +50,7 @@ install dependencies
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # other dependencies
-sudo apt install make build-essential libssl-dev pkg-config
+sudo apt install make build-essential libssl-dev pkg-config python3-sphinx
 ```
 
 build
@@ -59,3 +61,8 @@ make builder OUT_DIR=out
 ```
 
 the builder can then be found under `out/builder`  and `out/builder.tar.gz`
+
+
+# References
+
+- [nodiscc/debian-live-config](https://github.com/nodiscc/debian-live-config)

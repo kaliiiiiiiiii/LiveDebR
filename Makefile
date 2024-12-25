@@ -2,6 +2,7 @@
 
 # Default output directory
 OUT_DIR ?= out
+DEBR = $(OUT_DIR)/builder/debr
 
 builder:
 	@echo "building builder"
@@ -20,15 +21,18 @@ builder:
 	tar -czvf $(OUT_DIR)/builder.tar.gz -C $(OUT_DIR) builder/
 
 build:
+	$(MAKE) clean-live
 	@echo building .iso
-	$(OUT_DIR)/builder/debr deps
-	$(OUT_DIR)/builder/debr config
-	$(OUT_DIR)/builder/debr build
+	$(DEBR) deps
+	$(DEBR) config
+	$(DEBR) build
 
 config:
-	$(MAKE) clean
-	out/builder/debr config
+	$(MAKE) clean-live
+	$(DEBR) config
+
+clean-live:
+	$(DEBR) clean || true
 clean:
-	rm -rf builder*.tar.gz target/
-clean-config:
-	rm -rf $(OUT_DIR)/live/config
+	$(MAKE) clean-live
+	-rm -rf target/ out/builder/ out/builder.tar.gz

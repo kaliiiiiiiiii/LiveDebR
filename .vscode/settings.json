@@ -1,5 +1,9 @@
 {
     "files.exclude": {
      "**/.git": false
+    },
+    "terminal.integrated.inheritEnv": true,
+    "terminal.integrated.env.linux": {
+        "debr":"out/builder/debr"
     }
 }

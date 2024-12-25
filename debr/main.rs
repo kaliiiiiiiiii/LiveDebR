@@ -23,14 +23,18 @@ enum Commands {
     Deps,
     #[command(about = "Initialize build")]
     Config,
-    #[command(about = "Clean build")]
-    Clean,
-    #[command(about = "Build live")]
+    
+    #[command(about = "Build live debian")]
     Build,
+    #[command(about = "Drop-in replacement for the lb command")]
     Lb {
-        #[arg(help = "Aequivalent to lb")]
+        #[arg(help = "drop-in replacement for lb command")]
         lb_args: Option<Vec<String>>,
     },
+    #[command(about = "Clean all build files except of cache")]
+    Clean,
+    #[command(about = "Only clean chroot", name="clean-chroot")]
+    CleanChroot,
 }
 
 fn main() {
@@ -59,7 +63,11 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
 
         Some(Commands::Clean) => {
-            lb::clean(Some(live_dir))?;
+            lb::clean(Some(live_dir), None)?;
+        }
+
+        Some(Commands::CleanChroot) => {
+            lb::clean(Some(live_dir),Some(true))?;
         }
 
         Some(Commands::Build) => {
@@ -67,10 +75,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
 
         Some(Commands::Lb { lb_args }) => {
-            // Handle Lb command
-            let lb_args = lb_args.unwrap_or_default(); // If args is None, use an empty Vec<String>
+            let lb_args = lb_args.unwrap_or_default();
             let lb_args_ref: Vec<&str> = lb_args.iter().map(|s| s.as_str()).collect();
-            // Assuming lb::lb expects a slice of &str
             lb::lb(&lb_args_ref, Some(Path::new(&args.out_dir)))?;
         }
 
@@ -83,23 +89,18 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn preprocess(args: &mut Vec<String>) {
-    // ensure that all commands after lb are treated as options
-    // => escape with --
     let mut lb_found = false;
     let mut i = 0;
 
     while i < args.len() {
         if lb_found {
             if args[i].starts_with("-") {
-                // Insert "--" before the argument that needs escaping
                 args.insert(i, "--".to_string());
-                // Skip the next index to avoid double insertion
                 i += 1;
             }
-        } else if args[i] == "lb" {
+        } else if vec!["lb"].contains(&args[i].as_str()) {
             lb_found = true;
         }
-        // Move to the next argument
         i += 1;
     }
 }
