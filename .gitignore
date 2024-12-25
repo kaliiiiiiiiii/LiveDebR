@@ -3,4 +3,4 @@
 
 builder*.tar.gz
 debr_usage.md
-.Cargo.lock
+Cargo.lock
