@@ -12,17 +12,11 @@ pub fn build(working_dir: Option<&Path>) -> io::Result<()> {
     lb(&["build"], working_dir)
 }
 
-pub fn clean(working_dir: Option<&Path>, chroot: Option<bool>) -> io::Result<()> {
-    let mut args = vec!["clean"];
-    let chroot = chroot.is_some_and(|x| x);
-    if chroot {
-        args.push("--chroot");
-    } else {
-        args.push("--all");
-    }
+pub fn clean(working_dir: Option<&Path>, build: Option<bool>) -> io::Result<()> {
+    let args = vec!["clean", "--all"];
     lb(&args, working_dir)?;
     
-    if !chroot {
+    if !build.is_some_and(|x| x) {
         let config_dir = if let Some(dir) = working_dir {
             dir.to_path_buf()
         } else {

@@ -21,13 +21,13 @@ gunzip live-image-amd64.hybrid.iso.gz
 Usage: debr [OPTIONS] [COMMAND]
 
 Commands:
-  deps          Install dependencies
-  config        Initialize build
-  build         Build live debian
-  lb            Drop-in replacement for the lb command
-  clean         Clean all build files except of cache
-  clean-chroot  Only clean chroot
-  help          Print this message or the help of the given subcommand(s)
+  deps         Install dependencies
+  config       Initialize build
+  build        Build live debian
+  lb           Drop-in replacement for the lb command
+  clean        Clean all live-build files except of cache, including the config
+  clean-build  Clean all build files except of cache
+  help         Print this message or the help of the given subcommand(s)
 
 Options:
   -c, --config <CONFIG>    Path to the configuration file [default: config.json]

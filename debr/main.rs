@@ -31,10 +31,10 @@ enum Commands {
         #[arg(help = "drop-in replacement for lb command")]
         lb_args: Option<Vec<String>>,
     },
-    #[command(about = "Clean all build files except of cache")]
+    #[command(about = "Clean all live-build files except of cache, including the config")]
     Clean,
-    #[command(about = "Only clean chroot", name="clean-chroot")]
-    CleanChroot,
+    #[command(about = "Clean all build files except of cache", name="clean-build")]
+    CleanBuild,
 }
 
 fn main() {
@@ -66,7 +66,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             lb::clean(Some(live_dir), None)?;
         }
 
-        Some(Commands::CleanChroot) => {
+        Some(Commands::CleanBuild) => {
             lb::clean(Some(live_dir),Some(true))?;
         }
 

@@ -32,7 +32,7 @@ config:
 	$(DEBR) config
 
 clean-live:
-	$(DEBR) clean || true
+	target/release/debr clean
 clean:
 	$(MAKE) clean-live
-	-rm -rf target/ out/builder/ out/builder.tar.gz
+	-rm -rf out/builder/ out/builder.tar.gz
