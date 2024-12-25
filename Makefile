@@ -11,7 +11,7 @@ builder:
 	# place builder files
 	mkdir -p $(OUT_DIR)/builder
 	cp target/release/debr $(OUT_DIR)/builder/
-	$(OUT_DIR)/builder/debr help | sed '1s/^/```\n/' | sed '$$a```' > help_output.txt
+	$(OUT_DIR)/builder/debr help | sed '1s/^/```\n/' | sed '$$a```' > debr_usage.md
 	cp -r debr/assets $(OUT_DIR)/builder
 	cp config.json $(OUT_DIR)/builder/config.json
 
@@ -36,3 +36,8 @@ clean-live:
 clean:
 	$(MAKE) clean-live
 	-rm -rf out/builder/ out/builder.tar.gz
+
+deps:
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	# other dependencies
+	apt install -y make build-essential libssl-dev pkg-config python3-sphinx

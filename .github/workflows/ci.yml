@@ -21,28 +21,41 @@ jobs:
     - name: Install dependencies
       run: |
         apt update
-        apt install -y make curl build-essential  libssl-dev pkg-config
-
-        # Install Rust via rustup (non-interactive with -y)
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-
-    - name: Read release.md and replace {$tag} with actual tag
-      id: read_release
-      shell: bash
-      run: |
-        r=$(cat release.md)
-        # Replace {$tag} with the actual tag from the workflow
-        r="${r//\{\$tag\}/${{ github.ref_name }}}"
-        r="${r//'%'/'%25'}"  # Escape %
-        r="${r//$'\n'/'%0A'}"  # Escape newlines
-        r="${r//$'\r'/'%0D'}"  # Escape carriage returns
-        echo "RELEASE_BODY=$r" >> $GITHUB_OUTPUT
+        apt install -y make
+        make deps
 
     - name: Build builder
       run: |
-        # Use . to source the cargo environment
-        . "$HOME/.cargo/env"  # This works in both sh and bash
+        . "$HOME/.cargo/env"  # add freshly installed cargo to $path
         make builder
+        
+    - name: Read release.md and append debr_usage.md
+      id: read_release
+      shell: bash
+      run: |
+        # Escape function
+        escape_content() {
+          local content="$1"
+          content="${content//'%'/'%25'}"  # Escape %
+          content="${content//$'\n'/'%0A'}"  # Escape newlines
+          content="${content//$'\r'/'%0D'}"  # Escape carriage returns
+          echo "$content"
+        }
+
+        # Process release.md
+        release_content=$(cat release.md)
+        release_content="${release_content//\{\$tag\}/${{ github.ref_name }}}"
+        escaped_release=$(escape_content "$release_content")
+
+        # Process debr_usage.md
+        usage_content=$(cat debr_usage.md)
+        escaped_usage=$(escape_content "$usage_content")
+
+        # Combine results
+        final_release="${escaped_release}%0A${escaped_usage}"
+        echo "RELEASE_BODY=$final_release" >> $GITHUB_OUTPUT
+
+
     - name: Upload builder
       uses: svenstaro/upload-release-action@v2
       with:

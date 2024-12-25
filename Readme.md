@@ -17,51 +17,11 @@ gunzip live-image-amd64.hybrid.iso.gz
 ```
 
 ## Usage
-```
-Usage: debr [OPTIONS] [COMMAND]
+The usage can be found in [release](https://github.com/kaliiiiiiiiii/LiveDebR/releases/latest)
 
-Commands:
-  deps         Install dependencies
-  config       Initialize build
-  build        Build live debian
-  lb           Drop-in replacement for the lb command
-  clean        Clean all live-build files except of cache, including the config
-  clean-build  Clean all build files except of cache
-  help         Print this message or the help of the given subcommand(s)
+where config file should be in the form [config.json](https://github.com/kaliiiiiiiiii/LiveDebR/blob/main/config.json)
 
-Options:
-  -c, --config <CONFIG>    Path to the configuration file [default: config.json]
-  -o, --out-dir <OUT_DIR>  Path for the live-debian-build to use [default: out]
-  -h, --help               Print help
-  -V, --version            Print version
-```
-
-where config should be in the form [config.json](https://github.com/kaliiiiiiiiii/LiveDebR/blob/main/config.json)
-
-The builded images can then be found under `out-dir/live` 
-
-
-# Building the builder
-only tested on debian
-
-install dependencies
-```bash
-# install rustup
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# other dependencies
-sudo apt install make build-essential libssl-dev pkg-config python3-sphinx
-```
-
-build
-```bash
-git clone https://github.com/kaliiiiiiiiii/LiveDebR.git
-cd LiveDebR
-make builder OUT_DIR=out
-```
-
-the builder can then be found under `out/builder`  and `out/builder.tar.gz`
-
+> TODO: build propper docs
 
 # References
 

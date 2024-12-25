@@ -2,5 +2,5 @@
 /out
 
 builder*.tar.gz
-help_output.txt
+debr_usage.md
 .Cargo.lock
