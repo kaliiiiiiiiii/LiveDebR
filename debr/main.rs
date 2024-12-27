@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::{error::Error, process};
 
 mod bash;

@@ -16,8 +16,9 @@ builder:
 	cp config.json $(OUT_DIR)/builder/config.json
 
 	# place keyringer
-	cp target/release/keyringer $(OUT_DIR)/builder/assets/
-	cp keyringer/assets/keyringer.service $(OUT_DIR)/builder/assets
+	mkdir -p $(OUT_DIR)/builder/assets/keyringer
+	cp target/release/keyringer $(OUT_DIR)/builder/assets/keyringer
+	cp -r keyringer/assets $(OUT_DIR)/builder/assets/keyringer
 
 	tar -czvf $(OUT_DIR)/builder.tar.gz -C $(OUT_DIR) builder/
 

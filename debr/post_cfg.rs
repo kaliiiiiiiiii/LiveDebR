@@ -77,16 +77,21 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         let keyringer_path = includes_chroot.join("usr/local/bin/keyringer");
         let keyrings_path = includes_chroot.join("etc/keyringer/keyrings.json");
         let service_path = includes_chroot.join("etc/systemd/system/keyringer.service");
+        let timer_path = includes_chroot.join("etc/systemd/system/keyringer.timer");
         create_dir_all(keyringer_path.parent().unwrap())?;
         create_dir_all(keyrings_path.parent().unwrap())?;
         create_dir_all(service_path.parent().unwrap())?;
-        copy(dir.join("assets/keyringer"), &keyringer_path)?;
-        copy(dir.join("assets/keyringer.service"), &service_path)?;
+        create_dir_all(timer_path.parent().unwrap())?;
+        copy(dir.join("assets/keyringer/keyringer"), &keyringer_path)?;
+        copy(dir.join("assets/keyringer/assets/keyringer.service"), &service_path)?;
+        copy(dir.join("assets/keyringer/assets/keyringer.timer"), &timer_path)?;
         write(&keyrings_path, serde_json::to_string(&keyrings)?)?;
         set_permissions(&keyringer_path, PermissionsExt::from_mode(0o755))?;
         set_permissions(&keyrings_path, PermissionsExt::from_mode(0o644))?;
         set_permissions(&service_path, PermissionsExt::from_mode(0o644))?;
-        extra_e_service.insert(s("keyringer.service"));
+        set_permissions(&timer_path, PermissionsExt::from_mode(0o644))?;
+        extra_e_service.extend([s("keyringer.service"), s("keyringer.timer")]);
+        includes_parsed.insert(s("pkg-config"));
     }
     if let Some(e_service) = config.e_service {
         extra_e_service.extend(e_service);
