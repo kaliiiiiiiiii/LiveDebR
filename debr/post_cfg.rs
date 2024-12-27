@@ -55,7 +55,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     }
 
     cfg_parser::set("LB_APT", &config.apt.unwrap_or(s("apt")), &common)?;
-    cfg_parser::set("LB_APT_RECOMMENDS", &config.recommends.unwrap_or(false).to_string(), &common)?;
+    cfg_parser::set("LB_APT_RECOMMENDS", &config.recommends.unwrap_or(true).to_string(), &common)?;
 
     let include_extras = vec![s("apt-transport-https"),s("ca-certificates,openssl")];
     let deboot_opts_parsed = deboot_opt::parse(&config.de_boot_opts.unwrap_or(s("")), include_extras);

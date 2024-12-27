@@ -18,7 +18,9 @@ Default: `main contrib non-free non-free-firmware`
 ## recommends
 *bool* \
 Wether to automatically include recommended packages. \
-Default: `false`
+Default: `true`
+> **Warning**
+> Disabling this seems to make Debian crash (due to missing hardware drivers?).
 
 ## apt
 *string* \

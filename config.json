@@ -4,7 +4,7 @@
     "archiveAreas":"main contrib non-free non-free-firmware",
     "apt":"apt",
     "recommends":false,
-    "include":[],
+    "include":["firmware-iwlwifi"],
     "exclude":[],
     "requires":["gnome","vsc", "chrome"],
     "keyringer":true,
