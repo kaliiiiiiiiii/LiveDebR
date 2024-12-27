@@ -58,7 +58,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
 
         Some(Commands::Config) => {
-            config(live_dir, &args)?;
+            post_cfg::apply(&args, live_dir)?;
         }
 
         Some(Commands::Clean) => {
@@ -72,7 +72,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         Some(Commands::Build) => {
             if !live_dir.join("config/").exists(){
                 println!("Using Default config");
-                config(live_dir, &args)?;
+                post_cfg::apply(&args, live_dir)?;
             }
             lb::build(Some(live_dir))?;
         }
@@ -106,10 +106,4 @@ fn preprocess(args: &mut Vec<String>) {
         }
         i += 1;
     }
-}
-
-pub fn config(live_dir:&PathBuf, args:&Args) -> Result<(), Box<dyn Error>> {
-    lb::config(Some(live_dir))?;
-    post_cfg::apply(&args, live_dir)?;
-    Ok(())
 }

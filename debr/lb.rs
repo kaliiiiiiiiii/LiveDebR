@@ -28,10 +28,3 @@ pub fn clean(working_dir: Option<&Path>, build: Option<bool>) -> io::Result<()> 
         Ok(())
     }
 }
-
-
-
-
-pub fn config(working_dir: Option<&Path>) -> io::Result<()> {
-    lb(&["config"], working_dir)
-}

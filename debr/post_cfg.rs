@@ -9,6 +9,7 @@ mod cfg_parser;
 mod json_cfg;
 mod sign;
 mod deboot_opt;
+use crate::lb;
 
 use sign::place_key;
 
@@ -36,16 +37,12 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     }
     let config: json_cfg::Config = json_cfg::read_config(&config_path)?;
     let dist = &config.dist.unwrap_or(s("bookworm"));
+    lb::lb(&["config","--distribution", dist], Some(live_dir))?;
+
     let archive_areas = config.archive_areas.unwrap_or(s("main contrib non-free non-free-firmware"));
     
 
     let paths_to_set = [
-        ("LB_DISTRIBUTION", dist),
-        ("LB_DISTRIBUTION_CHROOT", dist),
-        ("LB_PARENT_DISTRIBUTION_CHROOT", dist),
-        ("LB_DISTRIBUTION_BINARY", dist),
-        ("LB_PARENT_DISTRIBUTION_BINARY", dist),
-        ("LB_PARENT_DEBIAN_INSTALLER_DISTRIBUTION", dist),
         ("LB_ARCHITECTURE", &config.arch.unwrap_or(s("amd64"))),
         ("LB_ARCHIVE_AREAS", &archive_areas),
         ("LB_PARENT_ARCHIVE_AREAS",&archive_areas)
