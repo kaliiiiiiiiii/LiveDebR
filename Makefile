@@ -33,7 +33,7 @@ config:
 	$(DEBR) config
 
 clean-live:
-	target/release/debr clean
+	-target/release/debr clean
 
 clean:
 	$(MAKE) clean-live
