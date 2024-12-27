@@ -1,0 +1,6 @@
+{"extras":[{
+    "name":"google-chrome",
+    "key":"https://dl.google.com/linux/linux_signing_key.pub",
+    "src":"deb http://dl.google.com/linux/chrome/deb/ stable main",
+    "add":["google-chrome-stable"]
+}]}

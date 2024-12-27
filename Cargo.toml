@@ -14,7 +14,7 @@ path = "debr/main.rs"
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
 colored = "2.2.0"
-reqwest = {version=" 0.12.9" , features = ["blocking"] }
+reqwest = {version="0.12.9" , features = ["blocking"] }
 serde = { version = "1.0.216", features = ["derive"] }
 serde_json = { version = "1.0"}
 tempfile = "3.14.0"

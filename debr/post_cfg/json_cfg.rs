@@ -1,44 +1,34 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::env::current_exe;
 
-pub fn s(_s: &str) -> String {
-    _s.to_string()
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)] // Added Clone here
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    #[serde(default = "Defaults::apt")]
-    pub apt: String,
-    #[serde(default = "Defaults::dist")]
-    pub dist: String,
-    #[serde(default = "Defaults::arch")]
-    pub arch: String,
-    #[serde(default = "Defaults::add_non_free")]
-    pub add_non_free: bool,
-    #[serde(default = "Defaults::chrome")]
-    pub chrome: bool,
-    #[serde(default = "Defaults::gnome")]
-    pub gnome: bool,
-    #[serde(default = "Defaults::lang")]
-    pub lang: String,
-    #[serde(default = "Defaults::include")]
-    pub include: HashSet<String>,
-    #[serde(default = "Defaults::exclude")]
-    pub exclude: HashSet<String>,
-    #[serde(default="Defaults::extras")]
-    pub extras: Vec<Extra>,
-    #[serde(default="Defaults::keyringer")]
-    pub keyringer: bool,
-    #[serde(default = "Defaults::de_boot_opts")]
-    pub de_boot_opts: String,
+    pub arch: Option<String>,
+    pub dist: Option<String>,
+    pub archive_areas: Option<String>,
+    pub recommends: Option<bool>,
+    pub apt: Option<String>,
+    pub include: Option<HashSet<String>>,
+    pub exclude: Option<HashSet<String>>,
+
+    pub extras: Option<Vec<Extra>>,
+    pub keyringer: Option<bool>,
+    pub de_boot_opts: Option<String>,
+    pub requires: Option<HashSet<String>>,
+    pub e_service: Option<HashSet<String>>,
+    pub d_service: Option<HashSet<String>>,
+
+    pub lang: Option<String>,
+    
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)] // Added Clone here
 #[serde(rename_all = "camelCase")]
 pub struct Extra {
     pub name: String,
@@ -47,41 +37,76 @@ pub struct Extra {
     pub add: HashSet<String>,
 }
 
-pub struct Defaults;
-impl Defaults {
-    pub fn apt()-> String {s("apt")}
-    pub fn dist() -> String {s("bullseye")}
-    pub fn arch() -> String {s("amd64")}
-    pub fn add_non_free() -> bool {true}
-    pub fn chrome() -> bool {true}
-    pub fn gnome() -> bool {true}
-    pub fn lang() -> String {s("en")}
-    pub fn include() -> HashSet<String> {HashSet::new()}
-    pub fn exclude() -> HashSet<String> {HashSet::new()}
-    pub fn extras() -> Vec<Extra> {Vec::new()}
-    pub fn keyringer() -> bool {true}
-    pub fn de_boot_opts() -> String {String::new()}
+pub fn merge(this_config:&Config, other_config: &Config) -> Result<Config, Box<dyn Error>> {
+    let this_json = serde_json::to_value(this_config)?;
+    let other_json = serde_json::to_value(&other_config)?;
+    let mut this_map = this_json.as_object().unwrap().clone();
+    let other_map = other_json.as_object().unwrap();
+
+    for (key, other_value) in other_map {
+            if let Some(this_value) = this_json.get(key){
+                if other_value.is_null(){}
+                else if this_value.is_null(){
+                    this_map.insert(key.clone(), other_value.clone());
+                }
+                else if this_value.is_array() && other_value.is_array(){
+                    let mut mut_array = this_value.as_array().unwrap().clone();
+                    mut_array.extend_from_slice(other_value.as_array().unwrap());
+                    this_map.insert(key.clone(), serde_json::to_value(mut_array)?);
+                }else if this_value != other_value {
+                    return Err(format!("Conflict in `{}` field\nThisValue:\n{}\nOtherValue:\n{}", key, this_value, other_value).into());
+                }
+            }else{
+                this_map.insert(key.clone(), other_value.clone());
+            }
+        }
+
+    let new_config: Config = serde_json::from_value(serde_json::Value::Object(this_map))?;
+
+    Ok(new_config)
+}
+
+pub fn add(this_config: &Config, path: &Path) -> Result<Config, Box<dyn Error>> {
+    let additional_config = read_config(path)?;
+
+    match merge(this_config, &additional_config) {
+        Ok(merged) => Ok(merged),
+        Err(e) => {
+            let conflict_message = format!(
+                "Error merging configurations: {}\nWhile merging with file `{}`.",
+                e,
+                path.display()
+            );
+            Err(conflict_message.into())
+        }
+    }
 }
 
 pub fn read_config(path: &Path) -> Result<Config, Box<dyn Error>> {
-    let config_path: &Path;
-    let current_dir = std::env::current_dir()?;
-    let full_path = current_dir.join(path);
-
-    if !path.is_file() {
-        config_path = full_path.as_path();
+    let mut final_path = path.to_path_buf();
+    
+    if !path.exists() {
+        final_path.set_extension("json");
+        final_path = current_exe()?.parent().unwrap().join("assets/modules/").join(final_path);
+        if !final_path.exists() {
+            return Err(format!("Module {} not found", final_path.display()).into());
+        }
+        println!("[Config module] {}", path.display());
     } else {
-        // fallback : relative path
-        config_path = path;
+        if !final_path.exists() {
+            return Err(format!("Config not found at {}", path.display()).into());
+        }
+        println!("[Config       ] {}", final_path.display());
     }
 
-    println!("Parsing config from {}", &config_path.canonicalize().unwrap().display());
-    if !config_path.is_file() {
-        return Err(format!("Config file '{}' not found", path.display()).into());
-    }
-
-    let file = File::open(config_path)?;
+    let file = File::open(final_path)?;
     let reader = BufReader::new(file);
-    let config: Config = serde_json::from_reader(reader)?;
+    let mut config: Config = serde_json::from_reader(reader)?;
+
+    if let Some(requires) = config.requires.clone() {
+        for required_path in requires {
+            config = add(&config, Path::new(&required_path))?;
+        }
+    }
     Ok(config)
 }

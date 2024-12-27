@@ -1,0 +1,3 @@
+{
+    "includes":["task-gnome-desktop","debian-installer-launcher"]
+}

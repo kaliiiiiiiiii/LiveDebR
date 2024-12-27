@@ -1,19 +1,13 @@
-{
-    "apt":"apt",
-    "addNonFree":true,
-    "chrome":true,
-    "dist":"bookworm",
+{   
     "arch":"amd64",
-    "gnome":true,
-    "lang":"en",
+    "dist":"bookworm",
+    "archiveAreas":"main contrib non-free non-free-firmware",
+    "apt":"apt",
+    "recommends":false,
     "include":[],
-    "extras":[
-        {
-        "name":"microsoft-archive-keyring",
-        "key":"https://packages.microsoft.com/keys/microsoft.asc",
-        "src":"deb https://packages.microsoft.com/repos/code stable main",
-        "add":["code"]
-        }],
+    "exclude":[],
+    "requires":["gnome","vsc", "chrome"],
     "keyringer":true,
-    "deBootOpts":"--include=apt-transport-https,ca-certificates,openssl"
+    "deBootOpts":"",
+    "lang":"en"
     }

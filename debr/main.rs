@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{error::Error, process};
 
 mod bash;
@@ -8,7 +8,7 @@ mod post_cfg;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
-struct Args {
+pub struct Args {
     #[command(subcommand)]
     command: Option<Commands>,
     #[arg(short = 'c', long = "config", default_value_t = String::from("config.json"), help = "Path to the configuration file")]
@@ -18,7 +18,7 @@ struct Args {
 }
 
 #[derive(Subcommand, Debug)]
-enum Commands {
+pub enum Commands {
     #[command(about = "Install dependencies")]
     Deps,
     #[command(about = "Initialize build")]
@@ -58,8 +58,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
 
         Some(Commands::Config) => {
-            lb::config(Some(live_dir))?;
-            post_cfg::apply(&args, live_dir)?;
+            config(live_dir, &args)?;
         }
 
         Some(Commands::Clean) => {
@@ -71,13 +70,17 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
 
         Some(Commands::Build) => {
+            if !live_dir.join("config/").exists(){
+                println!("Using Default config");
+                config(live_dir, &args)?;
+            }
             lb::build(Some(live_dir))?;
         }
 
         Some(Commands::Lb { lb_args }) => {
             let lb_args = lb_args.unwrap_or_default();
             let lb_args_ref: Vec<&str> = lb_args.iter().map(|s| s.as_str()).collect();
-            lb::lb(&lb_args_ref, Some(Path::new(&args.out_dir)))?;
+            lb::lb(&lb_args_ref, Some(live_dir))?;
         }
 
         None => {
@@ -103,4 +106,10 @@ fn preprocess(args: &mut Vec<String>) {
         }
         i += 1;
     }
+}
+
+pub fn config(live_dir:&PathBuf, args:&Args) -> Result<(), Box<dyn Error>> {
+    lb::config(Some(live_dir))?;
+    post_cfg::apply(&args, live_dir)?;
+    Ok(())
 }

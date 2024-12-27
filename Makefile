@@ -17,6 +17,7 @@ builder:
 
 	# place keyringer
 	cp target/release/keyringer $(OUT_DIR)/builder/assets/
+	cp keyringer/assets/keyringer.service $(OUT_DIR)/builder/assets
 
 	tar -czvf $(OUT_DIR)/builder.tar.gz -C $(OUT_DIR) builder/
 
@@ -33,6 +34,7 @@ config:
 
 clean-live:
 	target/release/debr clean
+
 clean:
 	$(MAKE) clean-live
 	-rm -rf out/builder/ out/builder.tar.gz
@@ -40,4 +42,4 @@ clean:
 deps:
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	# other dependencies
-	apt install -y make build-essential libssl-dev pkg-config python3-sphinx
+	apt install -y make build-essential libssl-dev pkg-config
