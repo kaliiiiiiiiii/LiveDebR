@@ -15,8 +15,6 @@ use sign::place_key;
 
 use crate::Args;
 
-const EXTRA_NAME_BLACKLIST:&str = "non-free";
-
 pub fn s(_s: &str) -> String {_s.to_string()}
 
 pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
@@ -68,12 +66,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         let key = &extra.key;
         let archive_path = live_dir.join(format!("config/archives/{}.list.chroot",name));
         let key_path = live_dir.join(format!("config/archives/{}.key.chroot",name));
-        if EXTRA_NAME_BLACKLIST.to_string().split_whitespace().any(|x| x == name){
-            return Err(Box::new(Error::new(
-                ErrorKind::AlreadyExists,
-                format!("Name already reserved, not allowed for extras {}", name),
-            )));
-        }
+
         keyrings.insert(name.to_string(), key.to_string());
         cfg_parser::add(&extra.src, &archive_path)?;
         place_key(key, &key_path)?;

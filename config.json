@@ -3,10 +3,10 @@
     "dist":"bookworm",
     "archiveAreas":"main contrib non-free non-free-firmware",
     "apt":"apt",
-    "recommends":false,
+    "recommends":true,
     "include":["firmware-iwlwifi"],
     "exclude":[],
-    "requires":["gnome","vsc", "chrome"],
+    "requires":["gnome", "vsc", "chrome"],
     "keyringer":true,
     "deBootOpts":"",
     "lang":"en"
