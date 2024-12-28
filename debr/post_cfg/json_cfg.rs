@@ -20,6 +20,7 @@ pub struct Config {
 
     pub extras: Option<Vec<Extra>>,
     pub keyringer: Option<bool>,
+    pub dark_mode: Option<bool>,
     pub de_boot_opts: Option<String>,
     pub requires: Option<HashSet<String>>,
     pub e_service: Option<HashSet<String>>,

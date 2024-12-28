@@ -6,7 +6,7 @@
     "recommends":true,
     "include":["firmware-iwlwifi"],
     "exclude":[],
-    "requires":["gnome","vsc", "chrome"],
+    "requires":["gnome","dev", "chrome"],
     "keyringer":true,
     "deBootOpts":"",
     "lang":"en"

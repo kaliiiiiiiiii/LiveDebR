@@ -27,6 +27,7 @@ In the VSC console, it is accessible over `$debr --help`
 
 Following commands may be important for starting development when building
 ```bash
+make
 sudo $debr clean
 sudo $debr config
 sudo $debr build

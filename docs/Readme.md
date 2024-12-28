@@ -38,13 +38,17 @@ Blacklist of packages **not** to preinstall.
 > **Warning**
 > This currently is not implemented and won't have an effect.
 
+## snaps
+*list[string]* \
+[snap](https://snapcraft.io/docs/installing-snap-on-debian) packages to pre-install.
+
 ## requires
 *list[string]* \
 List of paths (or [modules](Modules.md)) of configs to merge into. \
 Example: \
 ```json
 {
-    "requires"["vsc", "extra_config.json"]
+    "requires"["gnome","dev", "extra_config.json"]
 }
 ```
 
@@ -65,10 +69,10 @@ List of extra **apt repositories** to include
 Extra apt repository to include. Example:
 ```json
 {
-    "name":"microsoft-archive-keyring",
-    "key":"https://packages.microsoft.com/keys/microsoft.asc",
-    "src":"https://packages.microsoft.com/repos/code stable main",
-    "add":["code"]
+    "name":"google-chrome",
+    "key":"https://dl.google.com/linux/linux_signing_key.pub",
+    "src":"http://dl.google.com/linux/chrome/deb/ stable main",
+    "add":["google-chrome-stable"]
 }
 ```
 **Keys** \
@@ -84,9 +88,13 @@ packages to install from
 
 ## keyringer
 *bool* \
-Wether to automatically install and configure [keyringer](https://github.com/kaliiiiiiiiii/LiveDebR/tree/main/keyringer), a package release key updater. \
+Wether to automatically install and configure (for [extra](#extra)) [keyringer](https://github.com/kaliiiiiiiiii/LiveDebR/tree/main/keyringer), a package release key updater. \
 Default: `true`
 
+## darkMode
+*bool* \
+Whether to change the theme to dark-mode. \
+Default: `true`
 
 ## deBootOpts
 *string* \
