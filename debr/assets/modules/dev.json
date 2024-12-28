@@ -5,6 +5,5 @@
         "android-sdk-platform-tools",
         "make", "build-essential",
         "gnome-disk-utility"
-    ],
-    "snaps":["code"]
+    ]
 }
