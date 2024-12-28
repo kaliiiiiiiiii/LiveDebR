@@ -23,7 +23,7 @@ jobs:
         apt update
         apt install -y make wget
         wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
-        apt install "$PWD/megacmd-Debian_12_amd64.deb"
+        apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
         make deps
 
     - name: Build builder
