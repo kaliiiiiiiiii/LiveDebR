@@ -130,7 +130,7 @@ fn escape_to_list(set: &HashSet<String>) -> String {
     return escaped;
 }
 
-fn chmod_x<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
+pub fn chmod_x<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     let metadata = metadata(&path)?;
     let mut permissions = metadata.permissions();
     

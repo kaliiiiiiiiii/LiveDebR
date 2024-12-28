@@ -125,13 +125,24 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         includes_parsed.insert(s("snapd"));
 
         let snap_temp_path = includes_after_packages.join("var/snap-download-cache");
+        create_dir_all(&snap_temp_path)?;
         for package in &snaps_parsed {
             snap::download(package, &arch,&snap_temp_path)?;
         }
+
+        // snapd live boot install from cache service
+        let snapd_installer_service_path = includes_after_packages.join("etc/systemd/system/snapt_installer.service");
+        create_dir_all(snapd_installer_service_path.parent().unwrap())?;
+        copy(dir.join("assets/snapd_installer.service"), &snapd_installer_service_path)?;
+        set_permissions(&snapd_installer_service_path, PermissionsExt::from_mode(0o644))?;
+        e_service_parsed.insert(s("snapd_installer.service"));
         
         let content = hooks::snap_install_from(&snaps_parsed, "/var/snap-download-cache")?;
-        hooks::add_hook("9998-install-snaps.hook.chroot", &hooks::logger_wrap(&content), live_dir, true)?;
+        let script_path = snap_temp_path.join("installer.sh");
+        write(&script_path, content)?;
+        hooks::chmod_x(script_path)?;
     }
+
     // enabled//disabled services
     if let Some(e_service) = config.e_service {
         e_service_parsed.extend(e_service);
