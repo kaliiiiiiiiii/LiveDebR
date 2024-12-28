@@ -21,7 +21,9 @@ jobs:
     - name: Install dependencies
       run: |
         apt update
-        apt install -y make
+        apt install -y make wget
+        wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
+        apt install "$PWD/megacmd-Debian_12_amd64.deb"
         make deps
 
     - name: Build builder
@@ -81,15 +83,12 @@ jobs:
     - name: Build iso
       run: |
         make build
-        gzip -c out/live/live-image-amd64.hybrid.iso > out/live-image-amd64.hybrid.iso.gz
-    - name: Upload build
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: out/live-image-amd64.hybrid.iso.gz
-        asset_name: live-image-amd64.hybrid.iso.gz
-        tag: ${{ github.ref_name }}
-        overwrite: true
-        prerelease: true
-        make_latest: true
-        body: ${{ steps.read_release.outputs.RELEASE_BODY }}
+        mkdir release
+        gzip -c out/live/live-image-amd64.hybrid.iso > "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
+    - name: Mega upload
+      run: |
+          mega-login "$USERNAME" "$PASSWORD"
+          mega-put "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
+      env:
+          USERNAME: ${{ secrets.MEGA_USERNAME }}
+          PASSWORD: ${{ secrets.MEGA_PASSWORD }}
