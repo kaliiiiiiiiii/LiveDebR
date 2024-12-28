@@ -10,6 +10,7 @@ mod json_cfg;
 mod sign;
 mod deboot_opt;
 mod hooks;
+mod snap;
 use crate::lb;
 
 use sign::place_key;
@@ -113,19 +114,24 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     // darkMode - dark theme
     let dark = config.dark_mode.unwrap_or(true);
     if dark{
-        hooks::add_hook("1060-config-gnome-settings.hook.chroot", &hooks::gnome_set_dark()?, live_dir)?;
+        hooks::add_hook("1060-config-gnome-settings.hook.chroot", &hooks::gnome_set_dark()?, live_dir, false)?;
     }
 
     // snap packages
     if let Some(snaps) = config.snaps{
         snaps_parsed.extend(snaps);
     }
-    if snaps_parsed.len() != 0{
+    if snaps_parsed.len() != 0 {
         includes_parsed.insert(s("snapd"));
-        let content = hooks::snap_install(&snaps_parsed)?;
-        hooks::add_hook("0400-install-snaps.hook.chroot", &content, live_dir)?;
-    }
 
+        let snap_temp_path = includes_after_packages.join("var/snap-download-cache");
+        for package in &snaps_parsed {
+            snap::download(package, &arch,&snap_temp_path)?;
+        }
+        
+        let content = hooks::snap_install_from(&snaps_parsed, "/var/snap-download-cache")?;
+        hooks::add_hook("9998-install-snaps.hook.chroot", &hooks::logger_wrap(&content), live_dir, true)?;
+    }
     // enabled//disabled services
     if let Some(e_service) = config.e_service {
         e_service_parsed.extend(e_service);
@@ -135,7 +141,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     }
     if d_service_parsed.len() != 0 || e_service_parsed.len() != 0{
         let content = hooks::services(&e_service_parsed, &d_service_parsed)?;
-        hooks::add_hook("0500-update-default-services-status.hook.chroot", &content, live_dir)?;
+        hooks::add_hook("0500-update-default-services-status", &content, live_dir, false)?;
     }
     
     // apt packages to install
@@ -147,7 +153,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
 
     if includes_from_hook_parsed.len() != 0 { // mainly used for "extras" keys
         let content = hooks::apt_install(&includes_from_hook_parsed)?;
-        hooks::add_hook("0350-install-apt-packages.hook.chroot", &content, live_dir)?;
+        hooks::add_hook("0350-install-apt-packages.hook.chroot", &content, live_dir, false)?;
     }
 
     if let Some(exclude) = config.exclude {
