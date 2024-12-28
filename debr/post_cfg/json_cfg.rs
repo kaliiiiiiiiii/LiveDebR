@@ -62,8 +62,11 @@ pub fn merge(this_config:&Config, other_config: &Config) -> Result<Config, Box<d
                 this_map.insert(key.clone(), other_value.clone());
             }
         }
-
-    let new_config: Config = serde_json::from_value(serde_json::Value::Object(this_map))?;
+    
+    
+    let new_value = serde_json::Value::Object(this_map);
+    println!("{}\n", new_value.to_string());
+    let new_config: Config = serde_json::from_value(new_value)?;
 
     Ok(new_config)
 }

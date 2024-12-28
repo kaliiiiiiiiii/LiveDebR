@@ -159,6 +159,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     if let Some(include) = config.include{
         includes_parsed.extend(include);
     }
+    
     let content = includes_parsed.iter().cloned().collect::<Vec<String>>().join("\n");
     cfg_parser::add(&content, &live_dir.join("config/package-lists/debr_packages.list.chroot"))?;
 
