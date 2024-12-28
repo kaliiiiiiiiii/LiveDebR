@@ -1,7 +1,8 @@
 use std::collections::HashSet;
-use std::fs::{create_dir_all,File};
+use std::fs::{create_dir_all,File, read_to_string};
 use std::io::{self, Write};
 use std::path::Path;
+use std::env::current_exe;
 
 pub fn services(e_service: &HashSet<String>, d_service: &HashSet<String>) -> std::io::Result<String> {
     // https://github.com/nodiscc/debian-live-config/blob/55677bbd1d8fcfe522f090fb0d77bb1e16027f1d/config/hooks/normal/0350-update-default-services-status.hook.chroot
@@ -87,7 +88,7 @@ pub fn snap_install(packages: &HashSet<String>) -> io::Result<String> {
     ));
     script.push_str("echo \"Snap packages installed successfully.\"\n");
 
-    Ok(script)
+    Ok(with_snapd(&script)?)
 }
 
 pub fn gnome_set_dark() -> io::Result<String> {
@@ -98,6 +99,12 @@ pub fn gnome_set_dark() -> io::Result<String> {
     script.push_str("set -e  # Exit immediately if a command exits with a non-zero status\n");
     script.push_str("gsettings set org.gnome.desktop.interface color-scheme prefer-dark\n\n");
     Ok(script)
+}
+
+pub fn with_snapd(script:&String)-> std::io::Result<String>{
+    let with_snapd_path = current_exe().unwrap().parent().unwrap().join("assets/with_snapd.sh");
+    let content = read_to_string(with_snapd_path)?;
+    return Ok(content.replace("$(WITH_SNAPD)", &script));
 }
 
 pub fn add_hook(name:&str, content:&String, live_dir: &Path) -> std::io::Result<()>{
