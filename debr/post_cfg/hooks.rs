@@ -41,7 +41,7 @@ pub fn services(e_service: &HashSet<String>, d_service: &HashSet<String>) -> std
     Ok(script)
 }
 
-pub fn apt_install(packages: &HashSet<String>) -> std::io::Result<String> {
+pub fn apt_install(packages: &HashSet<String>, apt:&str) -> std::io::Result<String> {
     let mut script = String::new();
 
     script.push_str("#!/bin/bash\n");
@@ -49,7 +49,7 @@ pub fn apt_install(packages: &HashSet<String>) -> std::io::Result<String> {
     script.push_str("set -e  # Exit immediately if a command exits with a non-zero status\n");
     script.push_str("mv /tmp/apt-keyrings-cache-debr/*.gpg /etc/apt/keyrings/\n");
     script.push_str("rm -rf /tmp/apt-keyrings-cache-debr/\n");
-    script.push_str("apt update\n\n");
+    script.push_str(&format!("{} update\n\n", apt));
     
 
     let packages_str = escape_to_list(&packages);
@@ -58,9 +58,13 @@ pub fn apt_install(packages: &HashSet<String>) -> std::io::Result<String> {
         "echo \"Installing packages: {}\"\n",
         packages_str.replace("\"", "")
     ));
+    let mut no_recommends = " --no-install-recommends";
+    if apt == "aptitude"{
+        no_recommends = "";
+    }
     script.push_str(&format!(
-        "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends {}\n",
-        packages_str
+        "DEBIAN_FRONTEND=noninteractive {} install -y{} {}\n",
+        apt,no_recommends, packages_str
     ));
     script.push_str("\n");
     script.push_str("echo \"Packages installed successfully.\"\n");

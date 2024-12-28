@@ -25,7 +25,7 @@ Default: `true`
 ## apt
 *string* \
 The package manager to use (Allowed values: `apt`, `aptitude`). \
-Default: `apt`
+Default: `aptitude`
 
 
 ## include

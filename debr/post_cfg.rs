@@ -60,8 +60,10 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         cfg_parser::set(key, value, &bootstrap)?;
     }
 
+    
     // apt
-    cfg_parser::set("LB_APT", &config.apt.unwrap_or(s("apt")), &common)?;
+    let apt = config.apt.unwrap_or(s("aptitude"));
+    cfg_parser::set("LB_APT", &apt, &common)?;
     cfg_parser::set("LB_APT_RECOMMENDS", &config.recommends.unwrap_or(true).to_string(), &common)?;
 
     // debootstrap options
@@ -164,7 +166,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     cfg_parser::add(&content, &live_dir.join("config/package-lists/debr_packages.list.chroot"))?;
 
     if includes_from_hook_parsed.len() != 0 { // mainly used for "extras" keys
-        let content = hooks::apt_install(&includes_from_hook_parsed)?;
+        let content = hooks::apt_install(&includes_from_hook_parsed, &apt)?;
         hooks::add_hook("0350-install-apt-packages.hook.chroot", &content, live_dir, false)?;
     }
 
