@@ -19,7 +19,7 @@ Default: `main contrib non-free non-free-firmware`
 *bool* \
 Wether to automatically include recommended packages. \
 Default: `true`
-> **Warning**
+> **Warning** \
 > Disabling this seems to make Debian crash (due to missing hardware drivers?).
 
 ## apt
@@ -41,6 +41,10 @@ Blacklist of packages **not** to preinstall.
 ## snaps
 *list[string]* \
 [snap](https://snapcraft.io/docs/installing-snap-on-debian) packages to pre-install.
+
+> **Warning** \
+> Snaps are only installed after [`network-online.target`](https://www.freedesktop.org/wiki/Software/systemd/NetworkTarget/).
+> If it for some reason failed to run, check if running `sudo /var/snap-download-cache/installer.sh` in the booted system works.
 
 ## requires
 *list[string]* \
