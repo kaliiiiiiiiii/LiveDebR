@@ -21,9 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         apt update
-        apt install -y make wget
-        wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
-        apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
+        apt install -y make
         make deps
 
     - name: Build builder
@@ -57,7 +55,6 @@ jobs:
         final_release="${escaped_release}%0A${escaped_usage}"
         echo "RELEASE_BODY=$final_release" >> $GITHUB_OUTPUT
 
-
     - name: Upload builder
       uses: svenstaro/upload-release-action@v2
       with:
@@ -87,6 +84,9 @@ jobs:
         gzip -c out/live/live-image-amd64.hybrid.iso > "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
     - name: Mega upload
       run: |
+          apt install -y make wget
+          wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
+          apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
           mega-login "$USERNAME" "$PASSWORD"
           mega-put "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
       env:
