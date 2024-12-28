@@ -67,7 +67,7 @@ Extra apt repository to include. Example:
 {
     "name":"microsoft-archive-keyring",
     "key":"https://packages.microsoft.com/keys/microsoft.asc",
-    "src":"deb https://packages.microsoft.com/repos/code stable main",
+    "src":"https://packages.microsoft.com/repos/code stable main",
     "add":["code"]
 }
 ```

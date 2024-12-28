@@ -1,5 +1,5 @@
 use std::env;
-use std::fs::{copy, create_dir_all, set_permissions, metadata, write, File};
+use std::fs::{copy, create_dir_all, set_permissions, write, File};
 use std::io::{Error, ErrorKind, Write};
 use std::path::Path;
 use std::collections::{HashMap, HashSet};
@@ -22,12 +22,13 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     let dir = executable_path.parent().unwrap();
     let bootstrap = live_dir.join("config/bootstrap");
     let common = live_dir.join("config/common");
-    let includes_chroot = live_dir.join("config/includes.chroot_before_packages/");
+    let includes_after_packages = live_dir.join("config/includes.chroot_after_packages/");
 
     let mut includes_parsed: HashSet<String> = HashSet::new();
+    let mut includes_from_hook_parsed: HashSet<String> = HashSet::new();
     let mut extras_parsed : Vec<json_cfg::Extra> = Vec::new();
-    let mut extra_e_service: HashSet<String> = HashSet::new();
-    let mut extra_d_service: HashSet<String> = HashSet::new();
+    let mut e_service_parsed: HashSet<String> = HashSet::new();
+    let mut d_service_parsed: HashSet<String> = HashSet::new();
 
     let config_path = Path::new(&args.config);
     if !Path::new(config_path).exists() {
@@ -35,15 +36,17 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     }
     let config: json_cfg::Config = json_cfg::read_config(&config_path)?;
     let dist = &config.dist.unwrap_or(s("bookworm"));
+    let arch = &config.arch.unwrap_or(s("amd64"));
+    let archive_areas = &config.archive_areas.unwrap_or(s("main contrib non-free non-free-firmware"));
+    
     lb::lb(&["config","--distribution", dist], Some(live_dir))?;
 
-    let archive_areas = config.archive_areas.unwrap_or(s("main contrib non-free non-free-firmware"));
     
 
     let paths_to_set = [
-        ("LB_ARCHITECTURE", &config.arch.unwrap_or(s("amd64"))),
-        ("LB_ARCHIVE_AREAS", &archive_areas),
-        ("LB_PARENT_ARCHIVE_AREAS",&archive_areas)
+        ("LB_ARCHITECTURE", arch),
+        ("LB_ARCHIVE_AREAS", archive_areas),
+        ("LB_PARENT_ARCHIVE_AREAS",archive_areas)
     ];
     for (key, value) in paths_to_set.iter() {
         cfg_parser::set(key, value, &bootstrap)?;
@@ -64,20 +67,24 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     for extra in extras_parsed{
         let name = &extra.name;
         let key = &extra.key;
-        let archive_path = live_dir.join(format!("config/archives/{}.list.chroot",name));
-        let key_path = live_dir.join(format!("config/archives/{}.key.chroot",name));
+        let repo_src = format!(
+            "deb [arch={} signed-by=/etc/apt/keyrings/{}.gpg] {}",
+            arch,name, extra.src
+        );
+        let archive_include_path = includes_after_packages.join(format!("etc/apt/sources.list.d/{}.list", name));
+        let key_path = includes_after_packages.join(format!("tmp/apt-keyrings-cache-debr/{}.gpg", name));
 
         keyrings.insert(name.to_string(), key.to_string());
-        cfg_parser::add(&extra.src, &archive_path)?;
+        cfg_parser::add(&repo_src, &archive_include_path)?;
         place_key(key, &key_path)?;
-        includes_parsed.extend(extra.add);
+        includes_from_hook_parsed.extend(extra.add);
     };
     
     if config.keyringer.unwrap_or(true){
-        let keyringer_path = includes_chroot.join("usr/local/bin/keyringer");
-        let keyrings_path = includes_chroot.join("etc/keyringer/keyrings.json");
-        let service_path = includes_chroot.join("etc/systemd/system/keyringer.service");
-        let timer_path = includes_chroot.join("etc/systemd/system/keyringer.timer");
+        let keyringer_path = includes_after_packages.join("usr/local/bin/keyringer");
+        let keyrings_path = includes_after_packages.join("etc/keyringer/keyrings.json");
+        let service_path = includes_after_packages.join("etc/systemd/system/keyringer.service");
+        let timer_path = includes_after_packages.join("etc/systemd/system/keyringer.timer");
         create_dir_all(keyringer_path.parent().unwrap())?;
         create_dir_all(keyrings_path.parent().unwrap())?;
         create_dir_all(service_path.parent().unwrap())?;
@@ -90,28 +97,29 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         set_permissions(&keyrings_path, PermissionsExt::from_mode(0o644))?;
         set_permissions(&service_path, PermissionsExt::from_mode(0o644))?;
         set_permissions(&timer_path, PermissionsExt::from_mode(0o644))?;
-        extra_e_service.extend([s("keyringer.service"), s("keyringer.timer")]);
+        e_service_parsed.extend([s("keyringer.service"), s("keyringer.timer")]);
         includes_parsed.insert(s("pkg-config"));
     }
     if let Some(e_service) = config.e_service {
-        extra_e_service.extend(e_service);
+        e_service_parsed.extend(e_service);
     }
     if let Some(d_service) = config.d_service {
-        extra_d_service.extend(d_service);
+        d_service_parsed.extend(d_service);
     }
 
-    if extra_d_service.len() != 0 || extra_e_service.len() != 0{
-        let service_hook_path = &live_dir.join("config/hooks/normal/0350-update-default-services-status.hook.chroot");
-        create_dir_all(service_hook_path.parent().unwrap())?;
-        let mut service_hook_file = File::create(service_hook_path)?;
-        service_hook_file.write_all(gen_services_hook(&extra_e_service, &extra_d_service)?.as_bytes())?;
-        chmod_x(service_hook_path)?;
+    if d_service_parsed.len() != 0 || e_service_parsed.len() != 0{
+        let content = gen_services_hook(&e_service_parsed, &d_service_parsed)?;
+        add_hook("0500-update-default-services-status.hook.chroot", &content, live_dir)?;
+    }
+
+    if includes_from_hook_parsed.len() != 0 {
+        let content = gen_apt_install_hook(&includes_from_hook_parsed)?;
+        add_hook("0350-install-apt-packages.hook.chroot", &content, live_dir)?;
     }
     
 
     if let Some(include) = config.include{
         includes_parsed.extend(include);
-    
     }
     let content = includes_parsed.iter().cloned().collect::<Vec<String>>().join("\n");
     cfg_parser::add(&content, &live_dir.join("config/package-lists/installer.list.chroot"))?;
@@ -133,15 +141,19 @@ pub fn gen_services_hook(e_service: &HashSet<String>, d_service: &HashSet<String
 
     let generate_for_loop = |services: &HashSet<String>, action: &str| {
         if services.is_empty() {
-            return String::new()
+            return String::new();
         }
 
-        let services_str = services.iter().cloned().collect::<Vec<String>>().join(" ");
+        let services_str = services
+            .iter()
+            .map(|s| format!("\"{}\"", s.replace("\"", "\\\""))) // Escape quotes
+            .collect::<Vec<String>>()
+            .join(" ");
         let loop_action = if action == "Disabling" { "disable" } else { "enable" };
         let systemctl_action = if action == "Disabling" { "stop" } else { "start" };
 
         let mut loop_script = String::new();
-        loop_script.push_str(&format!("for service in \"{}\"; do\n", services_str));
+        loop_script.push_str(&format!("for service in {}; do\n", services_str));
         loop_script.push_str(&format!("    echo \"{} $service\"\n", action));
         loop_script.push_str(&format!("    systemctl {} \"$service\" || true\n", loop_action));
         loop_script.push_str(&format!("    systemctl {} \"$service\" || true\n", systemctl_action));
@@ -161,9 +173,41 @@ pub fn gen_services_hook(e_service: &HashSet<String>, d_service: &HashSet<String
     Ok(script)
 }
 
-fn chmod_x<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
-    let metadata = metadata(&path)?;
-    let mut permissions = metadata.permissions();
-    permissions.set_mode(permissions.mode() | 0o111);
-    set_permissions(path, permissions)
+pub fn gen_apt_install_hook(packages: &HashSet<String>) -> std::io::Result<String> {
+    let mut script = String::new();
+
+    script.push_str("#!/bin/bash\n");
+    script.push_str("echo \"I: running $0\"\n\n");
+    script.push_str("set -e  # Exit immediately if a command exits with a non-zero status\n");
+    script.push_str("mv /tmp/apt-keyrings-cache-debr/*.gpg /etc/apt/keyrings/\n");
+    script.push_str("rm -rf /tmp/apt-keyrings-cache-debr/\n");
+    script.push_str("apt update\n\n");
+    
+
+    let packages_str = packages
+        .iter()
+        .map(|p| format!("\"{}\"", p.replace("\"", "\\\""))) // Escape quotes
+        .collect::<Vec<String>>()
+        .join(" ");
+
+    script.push_str(&format!(
+        "echo \"Installing packages: {}\"\n",
+        packages_str.replace("\"", "")
+    ));
+    script.push_str(&format!(
+        "DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends {}\n",
+        packages_str
+    ));
+    script.push_str("\n");
+    script.push_str("echo \"Packages installed successfully.\"\n");
+
+    Ok(script)
+}
+
+fn add_hook(name:&str, content:&String, live_dir: &Path) -> std::io::Result<()>{
+    let service_hook_path = &live_dir.join("config/hooks/normal/").join(name);
+        create_dir_all(service_hook_path.parent().unwrap())?;
+        let mut service_hook_file = File::create(service_hook_path)?;
+        service_hook_file.write_all(content.as_bytes())?;
+        return Ok(());
 }

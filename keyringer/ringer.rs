@@ -6,6 +6,8 @@ use std::path::Path;
 use std::os::unix::fs::PermissionsExt;
 use std::io::Write;
 use std::collections::HashMap;
+use std::time::Duration;
+use std::thread;
 
 use crate::{info, error, KEYRINGS_DIR};
 
@@ -24,40 +26,67 @@ pub fn update_keyrings(keyrings: HashMap<String, String>) -> Result<(), Box<dyn 
         .build()?;
 
     for (file_name, url) in keyrings {
-  
         if !url.starts_with("https://") {
             error(&format!("Invalid URL (not HTTPS): {}", url));
             continue;
         }
 
-        let response = match client.get(&url).send() {
-            Ok(res) => res,
-            Err(e) => {
-                error(&format!("Failed to send request to {}: {}", url, e));
-                continue;
+        let mut retries = 0;
+        let max_retries = 3;
+        let retry_interval = Duration::from_secs(5 * 60); // 5 minutes
+
+        loop {
+            match client.get(&url).send() {
+                Ok(response) => {
+                    if !response.status().is_success() {
+                        error(&format!(
+                            "Failed to fetch key from {}: {}",
+                            url,
+                            response.status()
+                        ));
+                        retries += 1;
+                    } else {
+                        match response.bytes() {
+                            Ok(key_data) => {
+                                let output_path = keyrings_dir.join(format!("{}.gpg", file_name));
+                                if let Err(e) = dearmor_to(&key_data, &output_path) {
+                                    error(&format!(
+                                        "Failed to dearmor and write key to {}: {}",
+                                        output_path.display(),
+                                        e
+                                    ));
+                                } else {
+                                    break; // Success, move to the next keyring
+                                }
+                            }
+                            Err(e) => {
+                                error(&format!(
+                                    "Failed to read response from {}: {}",
+                                    url, e
+                                ));
+                                retries += 1;
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    error(&format!("Failed to send request to {}: {}", url, e));
+                    retries += 1;
+                }
             }
-        };
 
-        if !response.status().is_success() {
-            error(&format!("Failed to fetch key from {}: {}", url, response.status()));
-            continue;
-        }
-
-        let key_data = match response.bytes() {
-            Ok(data) => data,
-            Err(e) => {
-                error(&format!("Failed to read response from {}: {}", url, e));
-                continue;
+            if retries >= max_retries {
+                error(&format!(
+                    "Exceeded maximum retries for URL: {}",
+                    url
+                ));
+                break;
             }
-        };
 
-        // Dearmor & write
-        let output_path = keyrings_dir.join(format!("{}.gpg", file_name));
-        if let Err(e) = dearmor_to(&key_data, &output_path) {
-            error(&format!("Failed to dearmor and write key to {}: {}", output_path.display(), e));
-            continue;
+            // Wait before retrying
+            thread::sleep(retry_interval);
         }
-}
+    }
 
     Ok(())
 }

@@ -87,7 +87,7 @@ pub fn read_config(path: &Path) -> Result<Config, Box<dyn Error>> {
     
     if !path.exists() {
         final_path.set_extension("json");
-        final_path = current_exe()?.parent().unwrap().join("assets/modules/").join(final_path);
+        final_path = current_exe()?.parent().unwrap().join("assets/modules/").join(path).join(final_path);
         if !final_path.exists() {
             return Err(format!("Module {} not found", final_path.display()).into());
         }
