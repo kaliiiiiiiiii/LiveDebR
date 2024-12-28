@@ -1,3 +1,3 @@
 {
-    "includes":["task-gnome-desktop","debian-installer-launcher", "gnome-disk-utility"]
+    "includes":["task-gnome-desktop","debian-installer-launcher"]
 }
