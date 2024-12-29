@@ -17,12 +17,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: make curl build-essential libssl-dev pkg-config procps wget
+        version: 1.0
 
-    - name: Install dependencies
+    - name: Install remaining dependencies
       run: |
-        apt update
-        apt install -y make
-        make deps
+        wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
+        apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 
     - name: Build builder
       run: |
@@ -84,9 +88,6 @@ jobs:
         gzip -c out/live/live-image-amd64.hybrid.iso > "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
     - name: Mega upload
       run: |
-          apt install -y make wget
-          wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
-          apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
           mega-login "$USERNAME" "$PASSWORD"
           mega-put "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
       env:
