@@ -24,6 +24,7 @@ jobs:
       with:
         path: |
           /var/cache/apt
+          /out/live/cache
         key: debian-apt-2
 
     - name: Install deps
@@ -34,13 +35,6 @@ jobs:
         wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
         apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    
-    - name: Save apt cache
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          /var/cache/apt
-        key: ${{ steps.capt-cache-restore.outputs.cache-primary-key }}
 
     - name: Build builder
       run: |
@@ -100,6 +94,15 @@ jobs:
         make build
         mkdir release
         gzip -c out/live/live-image-amd64.hybrid.iso > "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
+    
+    - name: Save apt cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          /var/cache/apt
+          /out/live/cache
+        key: ${{ steps.capt-cache-restore.outputs.cache-primary-key }}
+    
     - name: Mega upload
       run: |
           mega-login "$USERNAME" "$PASSWORD"
