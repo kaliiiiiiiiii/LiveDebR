@@ -10,11 +10,13 @@ set -e\n";
 
 const RUNAS_USER: &str = r#"
 function runas-user() {
-    _display_id=":$(find /tmp/.X11-unix/* | sed 's#/tmp/.X11-unix/X##' | head -n 1)"
+    set +e
+    _display_id="0"
     _username=$(who | grep "\(${_display_id}\)" | awk '{print $1}')
     _user_id=$(id -u "$_username")
     _environment=("DISPLAY=$_display_id" "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_user_id/bus")
     sudo -Hu "$_username" env "${_environment[@]}" "$@"
+    set -e
 }
 "#;
 
