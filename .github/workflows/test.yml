@@ -17,8 +17,8 @@ jobs:
 
     - name: Install mega
       run: |
-        apt-get update
-        apt-get install wget
+        apt-get update -y
+        apt-get install -y wget
         wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
         apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
     
