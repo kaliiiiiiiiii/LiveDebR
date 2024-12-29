@@ -1,0 +1,36 @@
+name: test megacmd
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    container:
+      image: debian:latest
+      options: --privileged
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install mega
+      run: |
+        wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
+        apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
+    
+    - name: Create test file
+      run: echo "testfile" > "test.txt"
+    
+    - name: Mega upload
+      run: |
+          nohup tail -f /github/home/.megaCmd/megacmdserver.log &
+          mega-login "$MEGA_USERNAME" "$MEGA_PASSWORD"
+          mega-put "test.txt" /test/
+      env:
+          MEGA_USERNAME: ${{ secrets.MEGA_USERNAME }}
+          MEGA_PASSWORD: ${{ secrets.MEGA_PASSWORD }}

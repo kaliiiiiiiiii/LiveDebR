@@ -105,8 +105,9 @@ jobs:
     
     - name: Mega upload
       run: |
-          mega-login "$USERNAME" "$PASSWORD"
+          nohup tail -f /github/home/.megaCmd/megacmdserver.log &
+          mega-login "$MEGA_USERNAME" "$MEGA_PASSWORD"
           mega-put "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
       env:
-          USERNAME: ${{ secrets.MEGA_USERNAME }}
-          PASSWORD: ${{ secrets.MEGA_PASSWORD }}
+          MEGA_USERNAME: ${{ secrets.MEGA_USERNAME }}
+          MEGA_PASSWORD: ${{ secrets.MEGA_PASSWORD }}
