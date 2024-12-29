@@ -29,12 +29,14 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
 
     // parsed values
     let mut includes_parsed: HashSet<String> = HashSet::new();
+    let mut purge_parsed: HashSet<String> = HashSet::new();
     let mut includes_from_hook_parsed: HashSet<String> = HashSet::new();
     let mut snaps_parsed: HashSet<String> = HashSet::new();
     let mut extras_parsed : Vec<json_cfg::Extra> = Vec::new();
     let mut e_service_parsed: HashSet<String> = HashSet::new();
     let mut d_service_parsed: HashSet<String> = HashSet::new();
     let mut keyrings_parsed: HashMap<String, String> = HashMap::new();
+    
 
     // read config
     let config_path = Path::new(&args.config);
@@ -165,15 +167,17 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     let content = includes_parsed.iter().cloned().collect::<Vec<String>>().join("\n");
     cfg_parser::add(&content, &live_dir.join("config/package-lists/debr_packages.list.chroot"))?;
 
-    if includes_from_hook_parsed.len() != 0 { // mainly used for "extras" keys
+    if includes_from_hook_parsed.len() != 0 {
         let content = hooks::apt_install(&includes_from_hook_parsed, &apt)?;
         hooks::add_hook("0350-install-apt-packages.hook.chroot", &content, live_dir, false)?;
     }
 
-    if let Some(exclude) = config.exclude {
-        if exclude.len() != 0   {
-            return Err("excludes are currently not implemented".into());
-        }
+    if let Some(purge) = config.purge {
+        purge_parsed.extend(purge);
+    }
+    if purge_parsed.len() != 0{
+        let content = hooks::apt_purge(&purge_parsed)?;
+        hooks::add_hook("9550-purge-apt-packages.hook.chroot", &content, live_dir, false)?;
     }
     Ok(())
 }

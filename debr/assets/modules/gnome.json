@@ -1,3 +1,4 @@
 {
-    "include":["task-gnome-desktop","debian-installer-launcher"]
+    "include":["task-gnome-desktop","debian-installer-launcher"],
+    "purge":["gnome-games"]
 }

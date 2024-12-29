@@ -4,12 +4,24 @@ use std::os::unix::fs::PermissionsExt;
 use std::io::{self, Write};
 use std::path::Path;
 
+const DEF_SCRIPT: &str = "#!/bin/bash\n\
+echo \"I: running $0\"\n\n\
+set -e\n";
+
+const RUNAS_USER: &str = r#"
+function runas-user() {
+    _display_id=":$(find /tmp/.X11-unix/* | sed 's#/tmp/.X11-unix/X##' | head -n 1)"
+    _username=$(who | grep "\(${_display_id}\)" | awk '{print $1}')
+    _user_id=$(id -u "$_username")
+    _environment=("DISPLAY=$_display_id" "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_user_id/bus")
+    sudo -Hu "$_username" env "${_environment[@]}" "$@"
+}
+"#;
+
+
 pub fn services(e_service: &HashSet<String>, d_service: &HashSet<String>) -> std::io::Result<String> {
     // https://github.com/nodiscc/debian-live-config/blob/55677bbd1d8fcfe522f090fb0d77bb1e16027f1d/config/hooks/normal/0350-update-default-services-status.hook.chroot
-    let mut script = String::new();
-    
-    script.push_str("#!/bin/bash\n");
-    script.push_str("echo \"I: running $0\"\n\n");
+    let mut script = String::from(DEF_SCRIPT);
 
     let gen_for_loop = |services: &HashSet<String>, action: &str| {
         if services.is_empty() {
@@ -42,11 +54,7 @@ pub fn services(e_service: &HashSet<String>, d_service: &HashSet<String>) -> std
 }
 
 pub fn apt_install(packages: &HashSet<String>, apt:&str) -> std::io::Result<String> {
-    let mut script = String::new();
-
-    script.push_str("#!/bin/bash\n");
-    script.push_str("echo \"I: running $0\"\n\n");
-    script.push_str("set -e  # Exit immediately if a command exits with a non-zero status\n");
+    let mut script = String::from(DEF_SCRIPT);
     script.push_str("mv /tmp/apt-keyrings-cache-debr/*.gpg /etc/apt/keyrings/\n");
     script.push_str("rm -rf /tmp/apt-keyrings-cache-debr/\n");
     script.push_str(&format!("{} update\n\n", apt));
@@ -73,11 +81,7 @@ pub fn apt_install(packages: &HashSet<String>, apt:&str) -> std::io::Result<Stri
 }
 
 pub fn snap_install_from(packages: &HashSet<String>, temp_path: &str) -> io::Result<String> {
-    let mut script = String::new();
-
-    script.push_str("#!/bin/bash\n");
-    script.push_str("echo \"I: running $0\"\n\n");
-    script.push_str("set -e  # Exit immediately if a command exits with a non-zero status\n");
+    let mut script = String::from(DEF_SCRIPT);
 
     let packages_str = escape_to_list(packages);
     script.push_str("sleep 5\n");
@@ -95,14 +99,36 @@ pub fn snap_install_from(packages: &HashSet<String>, temp_path: &str) -> io::Res
     Ok(script)
 }
 
+pub fn apt_purge(packages: &HashSet<String>) -> io::Result<String> {
+    let mut script = String::from(DEF_SCRIPT);
+
+    let packages_str = escape_to_list(packages);
+
+    script.push_str(&format!("for package in {}; do\n", packages_str));
+    script.push_str("    set +e\n");
+    script.push_str("    apt purge --autoremove -y \"$package\"\n");
+    script.push_str("    exit_code=$?\n");
+    script.push_str("    set -e\n");
+    script.push_str("    if [ $exit_code -eq 100 ]; then\n");
+    script.push_str("        continue\n");
+    script.push_str("    elif [ $exit_code -ne 0 ]; then\n");
+    script.push_str("        echo \"Error: apt purge failed with exit code $exit_code\"\n");
+    script.push_str("        exit $exit_code\n");
+    script.push_str("    fi\n");
+    script.push_str("done\n");
+
+    script.push_str("echo \"Purge complete\"\n");
+
+    Ok(script)
+}
+
 
 pub fn gnome_set_dark() -> io::Result<String> {
-    let mut script = String::new();
-    script.push_str("#!/bin/bash\n");
-    script.push_str("set +e\n"); 
-    script.push_str("echo \"I: running $0\"\n\n");
-    script.push_str("gsettings set org.gnome.desktop.interface color-scheme prefer-dark\n\n");
-    script.push_str("exit 0\n"); 
+    let mut script = String::from(DEF_SCRIPT);
+    script.push_str(RUNAS_USER);
+    script.push_str("if command -v gsettings 2>&1 >/dev/null; then\n");
+    script.push_str("   runas-user gsettings set org.gnome.desktop.interface color-scheme prefer-dark\n");
+    script.push_str("fi");
     Ok(script)
 }
 
@@ -150,7 +176,7 @@ pub fn logger_wrap(script: &str) -> String {
 
     wrapped_script.push_str("#!/bin/bash\n");
     wrapped_script.push_str("LOG_FILE=/tmp/script.log\n");
-    wrapped_script.push_str("set -e  # Exit immediately if a command exits with a non-zero status\n");
+    wrapped_script.push_str("set -e \n");
     wrapped_script.push_str("exec &>> $LOG_FILE  # Redirect stdout and stderr to log file\n\n");
 
     // Append the original script

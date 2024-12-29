@@ -32,11 +32,9 @@ Default: `aptitude`
 *list[string]* \
 List of packages to preinstall.
 
-## exclude
+## purge
 *list[string]* \
-Blacklist of packages **not** to preinstall.
-> **Warning**
-> This currently is not implemented and won't have an effect.
+List of packages to purge form the preinstalled ones. \
 
 ## snaps
 *list[string]* \

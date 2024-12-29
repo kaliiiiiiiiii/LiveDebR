@@ -15,7 +15,7 @@ pub struct Config {
     pub recommends: Option<bool>,
     pub apt: Option<String>,
     pub include: Option<HashSet<String>>,
-    pub exclude: Option<HashSet<String>>,
+    pub purge: Option<HashSet<String>>,
     pub snaps: Option<HashSet<String>>,
 
     pub extras: Option<Vec<Extra>>,
