@@ -24,7 +24,7 @@ jobs:
       with:
         path: |
           /var/cache/apt
-          /out/live/cache
+          out/live/cache
         key: debian-apt-2
 
     - name: Install deps
@@ -41,7 +41,7 @@ jobs:
         . "$HOME/.cargo/env"  # add freshly installed cargo to $path
         make builder
         
-    - name: Read release.md and append debr_usage.md
+    - name: Prepare release.md
       id: read_release
       shell: bash
       run: |
@@ -78,7 +78,43 @@ jobs:
         prerelease: true
         make_latest: true
         body: ${{ steps.read_release.outputs.RELEASE_BODY }}
-    - name: Upload keyringer
+      
+    - name: Build iso
+      run: |
+        make build
+    
+    - name: Save apt cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          /var/cache/apt
+          out/live/cache
+        key: ${{ steps.capt-cache-restore.outputs.cache-primary-key }}
+    
+    - name: Mega upload
+      id: mega_upload
+      run: |
+          CMD_DIR="/github/home/.megaCmd"
+          LOG_FILE="$CMD_DIR/megacmdserver.log"
+          ISO="live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
+          DIR="/liveDebR"
+
+          mkdir release
+          gzip -c out/live/live-image-amd64.hybrid.iso > "release/$ISO"
+
+          mkdir -p "$CMD_DIR" && touch "$LOG_FILE" && nohup tail -f "$LOG_FILE" &
+
+          mega-login "$USERNAME" "$PASSWORD"
+          mega-put -c "release/$ISO" "$DIR/"
+          URL=$(mega-export -a -f "$DIR/$ISO" | grep -o 'https://mega.nz/file/[^"]*')
+          BODY="${{ steps.read_release.outputs.RELEASE_BODY }}"
+          BODY="${BODY//\{\$MEGAURL\}/$URL}"
+          echo "RELEASE_BODY=$BODY" >> $GITHUB_OUTPUT
+      env:
+          USERNAME: ${{ secrets.MEGA_USERNAME }}
+          PASSWORD: ${{ secrets.MEGA_PASSWORD }}
+    
+    - name: Upload keyringer & update release body
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -86,30 +122,5 @@ jobs:
         asset_name: keyringer
         tag: ${{ github.ref_name }}
         overwrite: true
-        prerelease: true
         make_latest: true
-        body: ${{ steps.read_release.outputs.RELEASE_BODY }}
-    - name: Build iso
-      run: |
-        make build
-        mkdir release
-        gzip -c out/live/live-image-amd64.hybrid.iso > "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
-    
-    - name: Save apt cache
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          /var/cache/apt
-          /out/live/cache
-        key: ${{ steps.capt-cache-restore.outputs.cache-primary-key }}
-    
-    - name: Mega upload
-      run: |
-          mkdir -p "/github/home/.megaCmd/"
-          touch "/github/home/.megaCmd/megacmdserver.log"
-          nohup tail -f "/github/home/.megaCmd/megacmdserver.log" &
-          mega-login "$MEGA_USERNAME" "$MEGA_PASSWORD"
-          mega-put -c "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
-      env:
-          MEGA_USERNAME: ${{ secrets.MEGA_USERNAME }}
-          MEGA_PASSWORD: ${{ secrets.MEGA_PASSWORD }}
+        body: ${{ steps.mega_upload.outputs.RELEASE_BODY }}

@@ -1,9 +1,7 @@
 # Usage
-
-Download prebuilt iso image
+You can download a prebuilt image from [mega]({$MEGAURL}) and then run
 ```bash
-curl -L -o live-image-amd64.hybrid.iso.gz https://github.com/kaliiiiiiiiii/LiveDebR/releases/download/{$tag}/live-image-amd64.hybrid.iso.gz
-gunzip live-image-amd64.hybrid.iso.gz
+gunzip -k -c $HOME/Downloads/live-image-amd64-*.hybrid.iso.gz > live-image-amd64.hybrid.iso
 ```
 
 ### Build image yourself
