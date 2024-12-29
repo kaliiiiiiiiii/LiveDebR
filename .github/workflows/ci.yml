@@ -107,7 +107,7 @@ jobs:
       run: |
           nohup tail -f /github/home/.megaCmd/megacmdserver.log &
           mega-login "$MEGA_USERNAME" "$MEGA_PASSWORD"
-          mega-put "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
+          mega-put -c "release/live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz" /liveDebR/
       env:
           MEGA_USERNAME: ${{ secrets.MEGA_USERNAME }}
           MEGA_PASSWORD: ${{ secrets.MEGA_PASSWORD }}

@@ -31,7 +31,7 @@ jobs:
           touch "/github/home/.megaCmd/megacmdserver.log"
           nohup tail -f "/github/home/.megaCmd/megacmdserver.log" &
           mega-login "$MEGA_USERNAME" "$MEGA_PASSWORD"
-          mega-put "test.txt" /test/
+          mega-put -c "test.txt" /test/
       env:
           MEGA_USERNAME: ${{ secrets.MEGA_USERNAME }}
           MEGA_PASSWORD: ${{ secrets.MEGA_PASSWORD }}
