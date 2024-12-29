@@ -17,16 +17,28 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: awalsh128/cache-apt-pkgs-action@latest
+    
+    - name: Restore apt cache
+      uses: actions/cache/restore@v4
+      id: capt-cache-restore
       with:
-        packages: make curl build-essential libssl-dev pkg-config procps wget
-        version: 1.0
+        path: |
+          /var/cache/apt
+        key: debian-apt-1
 
-    - name: Install remaining dependencies
+    - name: Install deps
       run: |
-        wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb 
+        apt install -y make curl build-essential libssl-dev pkg-config procps wget
+        wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
         apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    
+    - name: Save apt cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          /var/cache/apt
+        key: ${{ steps.capt-cache-restore.outputs.cache-primary-key }}
 
     - name: Build builder
       run: |
