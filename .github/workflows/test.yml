@@ -1,9 +1,6 @@
 name: test megacmd
 
-on:
-  push:
-    tags:
-      - '*'
+on: workflow_dispatch 
 
 jobs:
   build:
