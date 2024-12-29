@@ -9,7 +9,7 @@ cd LiveDebR
 
 Install dependencies
 ```bash
-sudo apt install make
+sudo apt-get install make
 sudo make deps
 ```
 

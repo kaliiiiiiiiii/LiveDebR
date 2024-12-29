@@ -41,6 +41,6 @@ clean:
 	-rm -rf out/builder/ out/builder.tar.gz
 
 deps:
-	apt install -y curl make build-essential libssl-dev pkg-config
+	apt-get install -y curl make build-essential libssl-dev pkg-config
 	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 	
