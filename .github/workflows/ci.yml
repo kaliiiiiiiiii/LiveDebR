@@ -24,12 +24,13 @@ jobs:
       with:
         path: |
           /var/cache/apt
-        key: debian-apt-1
+        key: debian-apt-2
 
     - name: Install deps
       run: |
-        apt update
-        apt install -y make curl build-essential libssl-dev pkg-config procps wget
+        echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/01keep-debs
+        apt-get update
+        apt-get install -y make curl build-essential libssl-dev pkg-config procps wget
         wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
         apt install -y "$PWD/megacmd-Debian_12_amd64.deb"
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
