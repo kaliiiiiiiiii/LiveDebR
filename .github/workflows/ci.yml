@@ -2,8 +2,6 @@ name: Build
 
 on:
   push:
-    branches:
-      - 'main'
     tags:
       - '*'
 
@@ -20,14 +18,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name: Restore apt cache
-      uses: actions/cache/restore@v4
-      id: capt-cache-restore
+    - name: Integrate cache
+      uses: actions/cache@v4
       with:
         path: |
           /var/cache/apt
           out/live/cache
-        key: debian-apt-2
+        key: debian-apt-3
 
     - name: Install deps
       run: |
@@ -78,21 +75,13 @@ jobs:
         asset_name: builder_linux_amd64_deb.tar.gz 
         tag: ${{ github.ref_name }}
         overwrite: true
-        prerelease: true
+        prerelease: false
         make_latest: true
         body: ${{ steps.read_release.outputs.RELEASE_BODY }}
       
     - name: Build iso
       run: |
         make build
-    
-    - name: Save apt cache
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          /var/cache/apt
-          out/live/cache
-        key: ${{ steps.capt-cache-restore.outputs.cache-primary-key }}
     
     - name: Mega upload
       id: mega_upload
