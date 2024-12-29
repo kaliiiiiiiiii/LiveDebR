@@ -46,22 +46,24 @@ jobs:
       shell: bash
       run: |
         # Escape function
-        escape_content() {
-          local content="$1"
-          content="${content//'%'/'%25'}"  # Escape %
-          content="${content//$'\n'/'%0A'}"  # Escape newlines
-          content="${content//$'\r'/'%0D'}"  # Escape carriage returns
-          echo "$content"
-        }
+        escape() {
+              local content="$1"
+              content="${content//'%'/'%25'}"
+              content="${content//$'\n'/'%0A'}"
+              content="${content//$'\r'/'%0D'}"
+              content="${content//&/'%26'}"
+              content="${content//#/'%23'}"
+              echo "$content"
+          }
 
         # Process release.md
         release_content=$(cat release.md)
-        release_content="${release_content//\{\$tag\}/${{ github.ref_name }}}"
-        escaped_release=$(escape_content "$release_content")
+        release_content="${release_content//\{tag\}/${{ github.ref_name }}}"
+        escaped_release=$(escape "$release_content")
 
         # Process debr_usage.md
         usage_content=$(cat debr_usage.md)
-        escaped_usage=$(escape_content "$usage_content")
+        escaped_usage=$(escape "$usage_content")
 
         # Combine results
         final_release="${escaped_release}%0A${escaped_usage}"
@@ -94,21 +96,29 @@ jobs:
     - name: Mega upload
       id: mega_upload
       run: |
+          escape() {
+              local content="$1"
+              content="${content//'%'/'%25'}"
+              content="${content//$'\n'/'%0A'}"
+              content="${content//$'\r'/'%0D'}"
+              content="${content//&/'%26'}"
+              content="${content//#/'%23'}"
+              echo "$content"
+          }
+          
           CMD_DIR="/github/home/.megaCmd"
           LOG_FILE="$CMD_DIR/megacmdserver.log"
           ISO="live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
           DIR="/liveDebR"
 
-          mkdir release
-          gzip -c out/live/live-image-amd64.hybrid.iso > "release/$ISO"
-
+          mkdir release && gzip -c out/live/live-image-amd64.hybrid.iso > "release/$ISO"
           mkdir -p "$CMD_DIR" && touch "$LOG_FILE" && nohup tail -f "$LOG_FILE" &
-
           mega-login "$USERNAME" "$PASSWORD"
           mega-put -c "release/$ISO" "$DIR/"
           URL=$(mega-export -a -f "$DIR/$ISO" | grep -o 'https://mega.nz/file/[^"]*')
+
           BODY="${{ steps.read_release.outputs.RELEASE_BODY }}"
-          BODY="${BODY//\{\$MEGAURL\}/$URL}"
+          BODY="${BODY//\{MEGAURL\}/$(escape "$URL")}"
           echo "RELEASE_BODY=$BODY" >> $GITHUB_OUTPUT
       env:
           USERNAME: ${{ secrets.MEGA_USERNAME }}

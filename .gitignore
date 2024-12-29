@@ -1,5 +1,6 @@
 /target
 /out
+/MegaLiveDebr
 
 builder*.tar.gz
 debr_usage.md
