@@ -27,8 +27,8 @@ jobs:
     
     - name: Mega upload
       run: |
-          nohup tail -f /github/home/.megaCmd/megacmdserver.log &
-          mega-login "$MEGA_USERNAME" "$MEGA_PASSWORD"
+          bash -c "nohup tail -f /github/home/.megaCmd/megacmdserver.log &" &
+          mega-login "testuser@gmail.com" "test_password"
           mega-put "test.txt" /test/
       env:
           MEGA_USERNAME: ${{ secrets.MEGA_USERNAME }}
