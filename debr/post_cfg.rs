@@ -138,10 +138,8 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
 
     // snap packages
     if let Some(snaps) = config.snaps{
-        println!("{}",snaps.clone().into_iter().collect::<Vec<String>>().join(", "));
-        println!("{}",snaps_parsed.clone().into_iter().collect::<Vec<String>>().join(", "));
         snaps_parsed.extend(snaps);
-        println!("{}",snaps_parsed.clone().into_iter().collect::<Vec<String>>().join(", "));
+        println!("Snaps to install: {}\n",snaps_parsed.clone().into_iter().collect::<Vec<String>>().join(" "));
         
     }
     if snaps_parsed.len() != 1 { // first one is "snapd" inserted by default
