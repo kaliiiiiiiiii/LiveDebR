@@ -95,7 +95,7 @@ jobs:
           mkdir -p "$CMD_DIR" && touch "$LOG_FILE" && nohup tail -f "$LOG_FILE" &
           mega-login "$USERNAME" "$PASSWORD"
           mega-put -c "release/$ISO" "$DIR/"
-          
+
           mega-export -a -f "$DIR/$ISO" > mega_url.txt
           grep -o 'https://mega.nz/file/[^"]*' mega_url.txt > url.txt
           rm mega_url.txt
@@ -107,7 +107,7 @@ jobs:
       run: |
         python3 -c "
         
-        import os, urllib.request, json
+        import os, urllib.request, json, time
         from datetime import datetime
 
         MEGA_URL=open('url.txt').read().strip(); 
@@ -144,7 +144,8 @@ jobs:
             'message': 'creating a tag',
         }).encode()
         ref_response = make_request(f'https://api.github.com/repos/{repo}/git/refs', method='POST', data=tag_ref_data, headers=headers)
-
+        
+        time.sleep(1)
         # Re-associate the release with new tag
         update_data = json.dumps({'tag_name': RENAME, 'name': RENAME, 'body': RELEASE_BODY, 'draft': False, 'prerelease': False, 'latest': True}).encode()
         make_request(f'https://api.github.com/repos/{repo}/releases/{RELEASE_ID}', method='PATCH', data=update_data, headers=headers)
