@@ -20,7 +20,7 @@ gunzip live-image-amd64.hybrid.iso.gz
 
 > **WARNING** \
 > Do NEVER attempt to delete the folder `out/live/chroot` manually, always use `sudo debr clean`. \
-> If there are any errors whilst cleaning, immediatly press `CTRL + c` to interrupt. Then Reboot your machine. \
+> If there are any errors whilst cleaning, immediatly press `CTRL + c` to interrupt. Then Reboot your machine. 
 
 The usage can be found in [release](https://github.com/kaliiiiiiiiii/LiveDebR/releases/latest)
 
