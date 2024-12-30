@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     tags:
-      - '*'
+      - 'release'
 
 jobs:
   build:
@@ -17,7 +17,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    
+
+    - name: verify release
+      id: verify-release
+      run: |
+        TAG="${{ github.ref_name }}""
+        RELEASE_NAME=$(curl -s \
+        -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        "https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG" | jq -r '.name')
+
+        if [[ ! "$RELEASE_NAME" =~ ^v ]]; then
+          echo "Error: RELEASE_NAME does not start with 'v'."
+          exit 1
+        fi
+        if [[ "$TAG" != "release" ]]; then
+          echo "Error: RELEASE_TAG hast to equal 'release'."
+          exit 1
+        fi
+        echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_OUTPUT
+
     - name: Integrate cache
       uses: actions/cache@v4
       with:
@@ -44,7 +62,7 @@ jobs:
       id: read_release
       shell: bash
       run: |
-        python3 -c "import os, uuid; final_content=open('release.md').read().replace('{tag}', '${{ github.ref_name }}')+'\n'+open('debr_usage.md').read(); open('release.md', 'w').write(final_content); delim=str(uuid.uuid1()); fh=open(os.environ['GITHUB_OUTPUT'], 'a'); print(f'RELEASE_BODY<<{delim}', file=fh); print(final_content, file=fh); print(delim, file=fh); fh.close()"
+        python3 -c "import os, uuid; final_content=open('release.md').read().replace('{tag}', '${{ github.event.release.name }}')+'\n'+open('debr_usage.md').read(); open('release.md', 'w').write(final_content); delim=str(uuid.uuid1()); fh=open(os.environ['GITHUB_OUTPUT'], 'a'); print(f'RELEASE_BODY<<{delim}', file=fh); print(final_content, file=fh); print(delim, file=fh); fh.close()"
     - name: Upload builder
       uses: svenstaro/upload-release-action@v2
       with:
@@ -92,3 +110,57 @@ jobs:
         overwrite: true
         make_latest: true
         body: ${{ steps.mega_upload.outputs.RELEASE_BODY }}
+    
+    - name: Post-config tags
+      run: |
+        python3 -c "
+        import os, urllib.request, json
+        from datetime import datetime
+
+        def make_request(url, method='GET', data=None, headers=None):
+            req = urllib.request.Request(url, data=data, headers=headers, method=method)
+            try:
+                with urllib.request.urlopen(req) as response:
+                    if response.status == 204:  # No Content
+                        return None
+                    return json.loads(response.read().decode())
+            except urllib.error.HTTPError as e:
+                error_message = e.read().decode()
+                print(f'Error: {e.code} - {e.reason}')
+                print(f'Error message: {error_message}')
+                exit(1)
+
+        TAG = '${{ github.ref_name }}'
+        GITHUB_TOKEN = '${{ secrets.GITHUB_TOKEN }}'
+        repo = '${{ github.repository }}'
+        release_url = f'https://api.github.com/repos/{repo}/releases/tags/{TAG}'
+        headers = {'Authorization': f'token {GITHUB_TOKEN}'}
+
+        # Get release data
+        release_data = make_request(release_url, headers=headers)
+        RELEASE_ID = release_data['id']
+        ORIGINAL_BODY = release_data.get('body', '')
+        BRANCH = release_data['target_commitish']
+
+        branch_url = f'https://api.github.com/repos/{repo}/git/refs/heads/{BRANCH}'
+        branch_data = make_request(branch_url, headers=headers)
+        COMMIT_SHA = branch_data['object']['sha']
+
+        delete_url = f'https://api.github.com/repos/{repo}/git/refs/tags/{TAG}'
+        make_request(delete_url, method='DELETE', headers=headers)
+
+        # Create tag via API
+        create_ref_url = f'https://api.github.com/repos/{repo}/git/refs'
+        tag_ref_data = json.dumps({
+            'ref': f'refs/tags/{TAG}',
+            'sha': COMMIT_SHA,
+            'message': 'creating a tag',
+        }).encode()
+
+        ref_response = make_request(create_ref_url, method='POST', data=tag_ref_data, headers=headers)
+
+        # Re-associate the release with the new tag
+        update_url = f'https://api.github.com/repos/{repo}/releases/{RELEASE_ID}'
+        update_data = json.dumps({'tag_name': TAG, 'name': TAG, 'body': ORIGINAL_BODY, 'draft': False, 'prerelease': False, 'latest': True}).encode()
+        make_request(update_url, method='PATCH', data=update_data, headers=headers)
+        "
