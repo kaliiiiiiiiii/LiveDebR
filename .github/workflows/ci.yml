@@ -21,6 +21,9 @@ jobs:
     - name: verify release
       id: verify-release
       run: |
+        apt-get update -y
+        apt-get install -y curl
+
         TAG="${{ github.ref_name }}"
         RELEASE_NAME=$(curl -s \
         -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -47,7 +50,6 @@ jobs:
     - name: Install deps
       run: |
         echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/01keep-debs
-        apt-get update -y
         apt-get install -y make procps wget python3
         wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
         apt-get install -y "$PWD/megacmd-Debian_12_amd64.deb"
