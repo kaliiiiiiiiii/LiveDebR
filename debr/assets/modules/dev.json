@@ -6,5 +6,5 @@
         "make", "build-essential",
         "gnome-disk-utility"
     ],
-    "snaps":["code"]
+    "snaps":["core20","code"]
 }
