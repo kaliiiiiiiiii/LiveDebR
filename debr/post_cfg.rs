@@ -120,8 +120,20 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     // darkMode - dark theme
     let dark = config.dark_mode.unwrap_or(true);
     if dark{
+        
+
+        // gsettings live boot configure service
+        let gnome_service_path = includes_after_packages.join("etc/systemd/system/apply_gnome_settings.service");
+        create_dir_all(gnome_service_path.parent().unwrap())?;
+        copy(dir.join("assets/apply_gnome_settings.service"), &gnome_service_path)?;
+        set_permissions(&gnome_service_path, PermissionsExt::from_mode(0o644))?;
+        e_service_parsed.insert(s("apply_gnome_settings.service"));
+        
         let content = &hooks::gnome_set_dark()?;
-        hooks::add_hook("9996-config-gnome-settings.hook.chroot", &hooks::logger_wrap(&content), live_dir, true)?;
+        let script_path = includes_after_packages.join("lib/debr_util_scripts/apply_gnome_settings.sh");
+        create_dir_all(script_path.parent().unwrap())?;
+        write(&script_path, content)?;
+        hooks::chmod_x(script_path)?;
     }
 
     // snap packages
@@ -135,7 +147,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     if snaps_parsed.len() != 1 { // first one is "snapd" inserted by default
         includes_parsed.insert(s("snapd"));
 
-        let snap_temp_path = includes_after_packages.join("var/snap-download-cache");
+        let snap_temp_path = includes_after_packages.join("lib/debr_util_scripts/snap-download-cache");
         create_dir_all(&snap_temp_path)?;
         for package in &snaps_parsed {
             snap::download(package, &arch,&snap_temp_path)?;
@@ -148,7 +160,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         set_permissions(&snapd_installer_service_path, PermissionsExt::from_mode(0o644))?;
         e_service_parsed.insert(s("snapd_installer.service"));
         
-        let content = hooks::snap_install_from(&snaps_parsed, "/var/snap-download-cache")?;
+        let content = hooks::snap_install_from(&snaps_parsed, "/lib/debr_util_scripts/snap-download-cache")?;
         let script_path = snap_temp_path.join("installer.sh");
         write(&script_path, content)?;
         hooks::chmod_x(script_path)?;

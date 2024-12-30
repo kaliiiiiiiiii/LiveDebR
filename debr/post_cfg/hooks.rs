@@ -120,14 +120,11 @@ pub fn apt_purge(packages: &HashSet<String>) -> io::Result<String> {
 pub fn gnome_set_dark() -> io::Result<String> {
     let mut script = String::from("#!/bin/sh\n");
     script.push_str("set +e\n\n");
-    script.push_str("if [ -e /var/lib/live/config/darkmode ]; then\n");
-    script.push_str("    exit 0\n");
-    script.push_str("fi\n");
+    script.push_str("sleep 2\n");
     script.push_str("dbus-launch gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'\n");
-    script.push_str("gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'\n");
-    script.push_str("gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'\n");
-    script.push_str("gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
-    script.push_str("touch /var/lib/live/config/darkmode\n");
+    script.push_str("dbus-launch gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'\n");
+    script.push_str("dbus-launch gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'\n");
+    script.push_str("dbus-launch gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
     Ok(script)
 }
 
