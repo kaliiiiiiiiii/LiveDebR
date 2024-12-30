@@ -135,7 +135,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
         }
 
         // snapd live boot install from cache service
-        let snapd_installer_service_path = includes_after_packages.join("etc/systemd/system/snapt_installer.service");
+        let snapd_installer_service_path = includes_after_packages.join("etc/systemd/system/snapd_installer.service");
         create_dir_all(snapd_installer_service_path.parent().unwrap())?;
         copy(dir.join("assets/snapd_installer.service"), &snapd_installer_service_path)?;
         set_permissions(&snapd_installer_service_path, PermissionsExt::from_mode(0o644))?;
