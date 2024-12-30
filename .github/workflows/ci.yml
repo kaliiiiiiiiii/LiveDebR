@@ -22,7 +22,7 @@ jobs:
       id: verify-release
       run: |
         apt-get update -y
-        apt-get install -y curl
+        apt-get install -y curl jq
 
         TAG="${{ github.ref_name }}"
         RELEASE_NAME=$(curl -s \
