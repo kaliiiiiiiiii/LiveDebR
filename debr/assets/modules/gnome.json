@@ -1,4 +1,4 @@
 {
     "include":["task-gnome-desktop","debian-installer-launcher"],
-    "purge":["gnome-games"]
+    "purge":["gnome-games", "libevolution", "evolution-data-server-common", "libreoffice-gnome"]
 }
