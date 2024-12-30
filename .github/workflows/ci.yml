@@ -93,15 +93,12 @@ jobs:
 
           mkdir release && gzip -c out/live/live-image-amd64.hybrid.iso > "release/$ISO"
           mkdir -p "$CMD_DIR" && touch "$LOG_FILE" && nohup tail -f "$LOG_FILE" &
-          mega-login "$USERNAME" "$PASSWORD"
+          mega-login "${{ secrets.MEGA_USERNAME }}" "${{ secrets.MEGA_PASSWORD }}"
           mega-put -c "release/$ISO" "$DIR/"
 
           mega-export -a -f "$DIR/$ISO" > mega_url.txt
           grep -o 'https://mega.nz/file/[^"]*' mega_url.txt > url.txt
           rm mega_url.txt
-      env:
-          USERNAME: ${{ secrets.MEGA_USERNAME }}
-          PASSWORD: ${{ secrets.MEGA_PASSWORD }}
     
     - name: Post-config tags
       run: |
