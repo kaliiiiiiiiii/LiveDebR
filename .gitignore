@@ -3,5 +3,6 @@
 /MegaLiveDebr
 
 builder*.tar.gz
+*.iso
 debr_usage.md
 Cargo.lock

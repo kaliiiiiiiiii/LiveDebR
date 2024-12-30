@@ -111,7 +111,7 @@ jobs:
         from datetime import datetime
 
         MEGA_URL=open('url.txt').read().strip(); 
-        RELEASE_BODY=open('release.md').read().replace('{MEG_URL}', url)
+        RELEASE_BODY=open('release.md').read().replace('{MEGAURL}', MEGA_URL)
 
         def make_request(url, method='GET', data=None, headers=None):
             req = urllib.request.Request(url, data=data, headers=headers, method=method)
