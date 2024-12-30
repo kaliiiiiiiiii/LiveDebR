@@ -92,7 +92,7 @@ pub fn snap_install_from(packages: &HashSet<String>, temp_path: &str) -> io::Res
     script.push_str("    echo \"Attempting to ack $package\"\n");
     script.push_str("    snap ack \"$snap_cache/$package.assert\"\n");
     script.push_str("    echo \"Attempting to install $package\"\n");
-    script.push_str("    snap install \"$snap_cache/$package.snap\"\n");
+    script.push_str("    snap install --classic \"$snap_cache/$package.snap\"\n");
     script.push_str("    rm -f \"$snap_cache/$package.snap\"\n");
     script.push_str("    rm -f \"$snap_cache/$package.assert\"\n");
     script.push_str("done\n");
