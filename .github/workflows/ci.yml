@@ -66,7 +66,7 @@ jobs:
       run: |
         mkdir gh_release
         mv out/builder.tar.gz gh_release/builder_linux_amd64_deb.tar.gz
-        cp out/builder/assets/keyringer gh_release/keyringer
+        cp out/builder/assets/keyringer/keyringer gh_release/keyringer
         python3 -c "import os, uuid; final_content=open('release.md').read().replace('{tag}', '${{ github.event.release.name }}')+'\n'+open('debr_usage.md').read(); open('release.md', 'w').write(final_content); delim=str(uuid.uuid1()); fh=open(os.environ['GITHUB_OUTPUT'], 'a'); print(f'RELEASE_BODY<<{delim}', file=fh); print(final_content, file=fh); print(delim, file=fh); fh.close()"
     - name: Upload builder
       uses: svenstaro/upload-release-action@v2
