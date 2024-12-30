@@ -8,18 +8,6 @@ const DEF_SCRIPT: &str = "#!/bin/bash\n\
 echo \"I: running $0\"\n\n\
 set -e\n";
 
-const RUNAS_USER: &str = r#"
-function runas-user() {
-    set +e
-    _display_id="0"
-    _username=$(who | grep "\(${_display_id}\)" | awk '{print $1}')
-    _user_id=$(id -u "$_username")
-    _environment=("DISPLAY=$_display_id" "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_user_id/bus")
-    sudo -Hu "$_username" env "${_environment[@]}" "$@"
-    set -e
-}
-"#;
-
 
 pub fn services(e_service: &HashSet<String>, d_service: &HashSet<String>) -> std::io::Result<String> {
     // https://github.com/nodiscc/debian-live-config/blob/55677bbd1d8fcfe522f090fb0d77bb1e16027f1d/config/hooks/normal/0350-update-default-services-status.hook.chroot
@@ -126,11 +114,16 @@ pub fn apt_purge(packages: &HashSet<String>) -> io::Result<String> {
 
 
 pub fn gnome_set_dark() -> io::Result<String> {
-    let mut script = String::from(DEF_SCRIPT);
-    script.push_str(RUNAS_USER);
-    script.push_str("if command -v gsettings 2>&1 >/dev/null; then\n");
-    script.push_str("   runas-user gsettings set org.gnome.desktop.interface color-scheme prefer-dark\n");
-    script.push_str("fi");
+    let mut script = String::from("#!/bin/sh\n");
+    script.push_str("set +e\n\n");
+    script.push_str("if [ -e /var/lib/live/config/darkmode ]; then\n");
+    script.push_str("    exit 0\n");
+    script.push_str("fi\n");
+    script.push_str("dbus-launch gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'\n");
+    script.push_str("gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'\n");
+    script.push_str("gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'\n");
+    script.push_str("gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
+    script.push_str("touch /var/lib/live/config/darkmode\n");
     Ok(script)
 }
 
@@ -177,9 +170,10 @@ pub fn logger_wrap(script: &str) -> String {
     let mut wrapped_script = String::new();
 
     wrapped_script.push_str("#!/bin/bash\n");
-    wrapped_script.push_str("LOG_FILE=/tmp/script.log\n");
+    wrapped_script.push_str("LOG_FILE=/tmp/debr_boot_script.log\n");
     wrapped_script.push_str("set -e \n");
-    wrapped_script.push_str("exec &>> $LOG_FILE  # Redirect stdout and stderr to log file\n\n");
+    wrapped_script.push_str("exec &>> $LOG_FILE\n");
+    wrapped_script.push_str("echo \"I: running $0\"\n\n");
 
     // Append the original script
     wrapped_script.push_str(script);

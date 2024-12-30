@@ -118,7 +118,8 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     // darkMode - dark theme
     let dark = config.dark_mode.unwrap_or(true);
     if dark{
-        hooks::add_hook("1060-config-gnome-settings.hook.chroot", &hooks::gnome_set_dark()?, live_dir, false)?;
+        let content = &hooks::gnome_set_dark()?;
+        hooks::add_hook("9996-config-gnome-settings.hook.chroot", &hooks::logger_wrap(&content), live_dir, true)?;
     }
 
     // snap packages
