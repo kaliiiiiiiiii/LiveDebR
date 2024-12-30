@@ -128,43 +128,33 @@ jobs:
                     return json.loads(response.read().decode())
             except urllib.error.HTTPError as e:
                 error_message = e.read().decode()
-                print(f'Error: {e.code} - {e.reason}')
-                print(f'Error message: {error_message}')
-                exit(1)
+                raise Exception(f'Error: {e.code} - {e.reason}\nError message: {error_message}')
 
         TAG = '${{ github.ref_name }}'
-        GITHUB_TOKEN = '${{ secrets.GITHUB_TOKEN }}'
+        RENAME = '${{ steps.verify-release.outputs.RELEASE_NAME }}'
         repo = '${{ github.repository }}'
-        release_url = f'https://api.github.com/repos/{repo}/releases/tags/{TAG}'
-        headers = {'Authorization': f'token {GITHUB_TOKEN}'}
+        headers = {'Authorization': f'token ${{ secrets.GITHUB_TOKEN }}'}
 
-        # Get release data
-        release_data = make_request(release_url, headers=headers)
+        # get release data
+        release_data = make_request(f'https://api.github.com/repos/{repo}/releases/tags/{TAG}', headers=headers)
         RELEASE_ID = release_data['id']
         ORIGINAL_BODY = release_data.get('body', '')
         BRANCH = release_data['target_commitish']
-
-        branch_url = f'https://api.github.com/repos/{repo}/git/refs/heads/{BRANCH}'
-        branch_data = make_request(branch_url, headers=headers)
+        branch_data = make_request(f'https://api.github.com/repos/{repo}/git/refs/heads/{BRANCH}', headers=headers)
         COMMIT_SHA = branch_data['object']['sha']
-
-        delete_url = f'https://api.github.com/repos/{repo}/git/refs/tags/{TAG}'
-        make_request(delete_url, method='DELETE', headers=headers)
-
-        # Create tag via API
-        create_ref_url = f'https://api.github.com/repos/{repo}/git/refs'
+        
+        # rename tag
+        make_request(f'https://api.github.com/repos/{repo}/git/refs/tags/{TAG}', method='DELETE', headers=headers)
         tag_ref_data = json.dumps({
-            'ref': f'refs/tags/{TAG}',
+            'ref': f'refs/tags/{RENAME}',
             'sha': COMMIT_SHA,
             'message': 'creating a tag',
         }).encode()
+        ref_response = make_request(f'https://api.github.com/repos/{repo}/git/refs', method='POST', data=tag_ref_data, headers=headers)
 
-        ref_response = make_request(create_ref_url, method='POST', data=tag_ref_data, headers=headers)
-
-        # Re-associate the release with the new tag
-        update_url = f'https://api.github.com/repos/{repo}/releases/{RELEASE_ID}'
-        update_data = json.dumps({'tag_name': TAG, 'name': TAG, 'body': ORIGINAL_BODY, 'draft': False, 'prerelease': False, 'latest': True}).encode()
-        make_request(update_url, method='PATCH', data=update_data, headers=headers)
+        # Re-associate the release with new tag
+        update_data = json.dumps({'tag_name': RENAME, 'name': RENAME, 'body': ORIGINAL_BODY, 'draft': False, 'prerelease': False, 'latest': True}).encode()
+        make_request(f'https://api.github.com/repos/{repo}/releases/{RELEASE_ID}', method='PATCH', data=update_data, headers=headers)
         "
     - name: Delete "release" tag
       if: failure()
