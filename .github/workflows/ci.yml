@@ -30,7 +30,7 @@ jobs:
       run: |
         echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/01keep-debs
         apt-get update -y
-        apt-get install -y make procps wget
+        apt-get install -y make procps wget python3
         wget https://mega.nz/linux/repo/Debian_12/amd64/megacmd-Debian_12_amd64.deb
         apt-get install -y "$PWD/megacmd-Debian_12_amd64.deb"
         make deps
@@ -44,13 +44,11 @@ jobs:
       id: read_release
       shell: bash
       run: |
-        release=$(cat release.md)
-        release=$(printf "$release" | sed "s/{tag}/${{ github.ref_name }}/g")
+        sed -i "s/{tag}/${{ github.ref_name }}/g" release.md
+        cat debr_usage.md >> release.md
 
-        usage=$(cat debr_usage.md)
-
-        final_release="${release}%0A${usage}"
-        echo "RELEASE_BODY=$final_release" >> $GITHUB_OUTPUT
+        RELEASE_BODY=$(cat release.md)
+        echo "RELEASE_BODY=$RELEASE_BODY" >> $GITHUB_OUTPUT
 
     - name: Upload builder
       uses: svenstaro/upload-release-action@v2
@@ -80,11 +78,14 @@ jobs:
           mkdir -p "$CMD_DIR" && touch "$LOG_FILE" && nohup tail -f "$LOG_FILE" &
           mega-login "$USERNAME" "$PASSWORD"
           mega-put -c "release/$ISO" "$DIR/"
-          URL=$(mega-export -a -f "$DIR/$ISO" | grep -o 'https://mega.nz/file/[^"]*')
+          mega-export -a -f "$DIR/$ISO" > mega_url.txt
+          grep -o 'https://mega.nz/file/[^"]*' mega_url.txt > url.txt
 
-          BODY="${{ steps.read_release.outputs.RELEASE_BODY }}"
-          BODY=$(printf "%s" "$BODY" | sed "s|{MEGAURL}|$URL|g"
-          echo "RELEASE_BODY=$BODY" >> $GITHUB_OUTPUT
+          # put mega url into release.md
+          python3 -c "url=open('url.txt').read().strip(); release=open('release.md').read().replace('{MEGAURL}', url); open('release.md', 'w').write(release)"
+
+          RELEASE_BODY=$(cat release.md)
+          echo "RELEASE_BODY=$RELEASE_BODY" >> $GITHUB_OUTPUT
       env:
           USERNAME: ${{ secrets.MEGA_USERNAME }}
           PASSWORD: ${{ secrets.MEGA_PASSWORD }}

@@ -156,7 +156,7 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     }
     if d_service_parsed.len() != 0 || e_service_parsed.len() != 0{
         let content = hooks::services(&e_service_parsed, &d_service_parsed)?;
-        hooks::add_hook("0500-update-default-services-status", &content, live_dir, false)?;
+        hooks::add_hook("0510-update-default-services-status", &content, live_dir, false)?;
     }
     
     // apt packages to install
