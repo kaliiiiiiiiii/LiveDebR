@@ -133,17 +133,10 @@ jobs:
         branch_data = make_request(f'https://api.github.com/repos/{repo}/git/refs/heads/{BRANCH}', headers=headers)
         COMMIT_SHA = branch_data['object']['sha']
         
-        # rename tag
+        # delete tag
         make_request(f'https://api.github.com/repos/{repo}/git/refs/tags/{TAG}', method='DELETE', headers=headers)
-        tag_ref_data = json.dumps({
-            'ref': f'refs/tags/{RENAME}',
-            'sha': COMMIT_SHA,
-            'message': 'creating a tag',
-        }).encode()
-        ref_response = make_request(f'https://api.github.com/repos/{repo}/git/refs', method='POST', data=tag_ref_data, headers=headers)
         
-        time.sleep(1)
-        # Re-associate the release with new tag
+        # Associate the release with new tag
         update_data = json.dumps({'tag_name': RENAME, 'name': RENAME, 'body': RELEASE_BODY, 'draft': False, 'prerelease': False, 'latest': True}).encode()
         make_request(f'https://api.github.com/repos/{repo}/releases/{RELEASE_ID}', method='PATCH', data=update_data, headers=headers)
         "
