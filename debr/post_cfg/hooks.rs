@@ -3,6 +3,7 @@ use std::fs::{create_dir_all,File, metadata, set_permissions};
 use std::os::unix::fs::PermissionsExt;
 use std::io::{self, Write};
 use std::path::Path;
+use ordermap::OrderSet;
 
 const DEF_SCRIPT: &str = "#!/bin/bash\n\
 echo \"I: running $0\"\n\n\
@@ -70,10 +71,13 @@ pub fn apt_install(packages: &HashSet<String>, apt:&str) -> std::io::Result<Stri
     Ok(script)
 }
 
-pub fn snap_install_from(packages: &HashSet<String>, temp_path: &str) -> io::Result<String> {
+pub fn snap_install_from(packages: &OrderSet<String>, temp_path: &str) -> io::Result<String> {
     let mut script = String::from(DEF_SCRIPT);
 
-    let packages_str = escape_to_list(packages);
+    let packages_str = packages.iter()
+        .map(|p| format!("\"{}\"", p.replace("\"", "\\\""))) // Escape quotes
+        .collect::<Vec<String>>()
+        .join(" ");
     script.push_str("sleep 5\n");
     script.push_str(&format!("snap_cache=\"{}\"\n", temp_path));
     script.push_str(&format!("for package in {}; do\n", packages_str));

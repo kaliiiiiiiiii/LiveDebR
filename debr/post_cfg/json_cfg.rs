@@ -16,7 +16,7 @@ pub struct Config {
     pub apt: Option<String>,
     pub include: Option<HashSet<String>>,
     pub purge: Option<HashSet<String>>,
-    pub snaps: Option<HashSet<String>>,
+    pub snaps: Option<Vec<String>>,
 
     pub extras: Option<Vec<Extra>>,
     pub keyringer: Option<bool>,

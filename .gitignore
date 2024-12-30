@@ -6,3 +6,4 @@ builder*.tar.gz
 *.iso
 debr_usage.md
 Cargo.lock
+prep_write.sh

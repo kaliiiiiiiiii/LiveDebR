@@ -3,6 +3,7 @@ use std::fs::{copy, create_dir_all, set_permissions, write};
 use std::io::{Error, ErrorKind};
 use std::path::Path;
 use std::collections::{HashMap, HashSet};
+use ordermap::OrderSet;
 use std::os::unix::fs::PermissionsExt;
 
 mod cfg_parser;
@@ -31,7 +32,8 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
     let mut includes_parsed: HashSet<String> = HashSet::new();
     let mut purge_parsed: HashSet<String> = HashSet::new();
     let mut includes_from_hook_parsed: HashSet<String> = HashSet::new();
-    let mut snaps_parsed: HashSet<String> = HashSet::new();
+    let mut snaps_parsed: OrderSet<String> = OrderSet::new();
+    snaps_parsed.insert(s("snapd"));
     let mut extras_parsed : Vec<json_cfg::Extra> = Vec::new();
     let mut e_service_parsed: HashSet<String> = HashSet::new();
     let mut d_service_parsed: HashSet<String> = HashSet::new();
@@ -124,9 +126,13 @@ pub fn apply(args: &Args, live_dir: &Path) -> Result<(), Box<dyn std::error::Err
 
     // snap packages
     if let Some(snaps) = config.snaps{
+        println!("{}",snaps.clone().into_iter().collect::<Vec<String>>().join(", "));
+        println!("{}",snaps_parsed.clone().into_iter().collect::<Vec<String>>().join(", "));
         snaps_parsed.extend(snaps);
+        println!("{}",snaps_parsed.clone().into_iter().collect::<Vec<String>>().join(", "));
+        
     }
-    if snaps_parsed.len() != 0 {
+    if snaps_parsed.len() != 1 { // first one is "snapd" inserted by default
         includes_parsed.insert(s("snapd"));
 
         let snap_temp_path = includes_after_packages.join("var/snap-download-cache");
