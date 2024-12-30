@@ -31,3 +31,4 @@ where config file should be in the form [config.json](https://github.com/kaliiii
 # References
 
 - [nodiscc/debian-live-config](https://github.com/nodiscc/debian-live-config)
+- [CollectiveIndustries/DRS](https://github.com/CollectiveIndustries/DRS)
