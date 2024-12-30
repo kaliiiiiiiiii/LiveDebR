@@ -166,3 +166,10 @@ jobs:
         update_data = json.dumps({'tag_name': TAG, 'name': TAG, 'body': ORIGINAL_BODY, 'draft': False, 'prerelease': False, 'latest': True}).encode()
         make_request(update_url, method='PATCH', data=update_data, headers=headers)
         "
+    - name: Delete "release" tag
+      if: failure()
+      run: |
+        curl -X DELETE \
+        -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        "https://api.github.com/repos/${REPO}/git/refs/tags/${{ github.ref_name }}"
+        
