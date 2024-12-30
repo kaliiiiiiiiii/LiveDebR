@@ -86,7 +86,7 @@ jobs:
       run: |
           CMD_DIR="/github/home/.megaCmd"
           LOG_FILE="$CMD_DIR/megacmdserver.log"
-          ISO="live-image-amd64-${{ github.ref_name }}.hybrid.iso.gz"
+          ISO="live-image-amd64-${{ steps.verify-release.outputs.RELEASE_NAME }}.hybrid.iso.gz"
           DIR="/liveDebR"
 
           mkdir release && gzip -c out/live/live-image-amd64.hybrid.iso > "release/$ISO"
