@@ -44,12 +44,7 @@ jobs:
       id: read_release
       shell: bash
       run: |
-        sed -i "s/{tag}/${{ github.ref_name }}/g" release.md
-        cat debr_usage.md >> release.md
-
-        RELEASE_BODY=$(cat release.md)
-        echo "RELEASE_BODY=$RELEASE_BODY" >> $GITHUB_OUTPUT
-
+        python3 -c "import os, uuid; final_content=open('release.md').read().replace('{tag}', '${{ github.ref_name }}')+'\n'+open('debr_usage.md').read(); open('release.md', 'w').write(final_content); with open(os.environ['GITHUB_OUTPUT'], 'a') as fh: delim=str(uuid.uuid1()); print(f'RELEASE_BODY<<{delim}', file=fh); print(final_content, file=fh); print(delim, file=fh)"
     - name: Upload builder
       uses: svenstaro/upload-release-action@v2
       with:
@@ -82,10 +77,7 @@ jobs:
           grep -o 'https://mega.nz/file/[^"]*' mega_url.txt > url.txt
 
           # put mega url into release.md
-          python3 -c "url=open('url.txt').read().strip(); release=open('release.md').read().replace('{MEGAURL}', url); open('release.md', 'w').write(release)"
-
-          RELEASE_BODY=$(cat release.md)
-          echo "RELEASE_BODY=$RELEASE_BODY" >> $GITHUB_OUTPUT
+          python3 -c "import os, uuid; url=open('url.txt').read().strip(); release=open('release.md').read().replace('{MEGAURL}', url); open('release.md', 'w').write(release); with open(os.environ['GITHUB_OUTPUT'], 'a') as fh: delim=str(uuid.uuid1()); print(f'RELEASE_BODY<<{delim}', file=fh); print(release, file=fh); print(delim, file=fh)"
       env:
           USERNAME: ${{ secrets.MEGA_USERNAME }}
           PASSWORD: ${{ secrets.MEGA_PASSWORD }}
