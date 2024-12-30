@@ -9,6 +9,16 @@ const DEF_SCRIPT: &str = "#!/bin/bash\n\
 echo \"I: running $0\"\n\n\
 set -e\n";
 
+const AS_USER: &str = r#"#!/bin/bash
+
+function as-user() {
+        _display_id=":$(find /tmp/.X11-unix/* | sed 's#/tmp/.X11-unix/X##' | head -n 1)"
+        _username="user"
+        _user_id=$(id -u "$_username")
+        _environment=("DISPLAY=$_display_id" "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$_user_id/bus")
+        sudo -Hu "$_username" "${_environment[@]}" "$@"
+    }
+"#;
 
 pub fn services(e_service: &HashSet<String>, d_service: &HashSet<String>) -> std::io::Result<String> {
     // https://github.com/nodiscc/debian-live-config/blob/55677bbd1d8fcfe522f090fb0d77bb1e16027f1d/config/hooks/normal/0350-update-default-services-status.hook.chroot
@@ -118,13 +128,13 @@ pub fn apt_purge(packages: &HashSet<String>) -> io::Result<String> {
 
 
 pub fn gnome_set_dark() -> io::Result<String> {
-    let mut script = String::from("#!/bin/sh\n");
+    let mut script = String::from(AS_USER);
     script.push_str("set +e\n\n");
-    script.push_str("sleep 2\n");
-    script.push_str("dbus-launch gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'\n");
-    script.push_str("dbus-launch gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'\n");
-    script.push_str("dbus-launch gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'\n");
-    script.push_str("dbus-launch gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
+    script.push_str("sleep 1\n");
+    script.push_str("as-user  gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'\n");
+    script.push_str("as-user  gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'\n");
+    script.push_str("as-user  gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'\n");
+    script.push_str("as-user  gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
     Ok(script)
 }
 

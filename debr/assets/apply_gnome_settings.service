@@ -1,15 +1,15 @@
 [Unit]
 Description=Apply GNOME Settings
-After=graphical.target
-Requires=graphical.target
+After=gdm.service
 
 [Service]
 Type=oneshot
-ExecStart=/lib/debr_util_scripts/apply_gnome_settings.sh
+ExecStart=bash /lib/debr_util_scripts/apply_gnome_settings.sh
+User=root
 StandardOutput=journal
 StandardError=journal
 RemainAfterExit=no
 Restart=no
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
