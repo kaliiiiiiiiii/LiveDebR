@@ -1,6 +1,7 @@
 /target
 /out
 /MegaLiveDebr
+/test-snap
 
 builder*.tar.gz
 *.iso
