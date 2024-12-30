@@ -1,7 +1,6 @@
 [Unit]
 Description=Installs the cached snapd packages
-Wants=network-online.target
-After=network-online.target
+After=snapd.service
 
 [Service]
 Type=oneshot
