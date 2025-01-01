@@ -88,17 +88,21 @@ pub fn snap_install_from(packages: &OrderSet<String>, temp_path: &str) -> io::Re
         .map(|p| format!("\"{}\"", p.replace("\"", "\\\""))) // Escape quotes
         .collect::<Vec<String>>()
         .join(" ");
-    script.push_str("sleep 5\n");
+    script.push_str("sleep 1\n");
     script.push_str(&format!("snap_cache=\"{}\"\n", temp_path));
     script.push_str(&format!("for package in {}; do\n", packages_str));
+    script.push_str("    set +e");
     script.push_str("    echo \"Attempting to ack $package\"\n");
     script.push_str("    snap ack \"$snap_cache/$package.assert\"\n");
     script.push_str("    echo \"Attempting to install $package\"\n");
     script.push_str("    snap install --classic \"$snap_cache/$package.snap\"\n");
+    script.push_str("    set -e");
     script.push_str("    rm -f \"$snap_cache/$package.snap\"\n");
     script.push_str("    rm -f \"$snap_cache/$package.assert\"\n");
     script.push_str("done\n");
     script.push_str("rm -rf \"$snap_cache\"\n");
+    script.push_str("rm /etc/systemd/system/snapd_installer.service\n");
+    script.push_str("systemctl disable \"snapd_installer.service\"");
 
     Ok(script)
 }
@@ -135,6 +139,10 @@ pub fn gnome_set_dark() -> io::Result<String> {
     script.push_str("as-user  gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'\n");
     script.push_str("as-user  gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'\n");
     script.push_str("as-user  gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
+    script.push_str("set -e\n");
+    script.push_str("rm /etc/systemd/system/apply_gnome_settings.service\n");
+    script.push_str("rm /lib/debr_util_scripts/apply_gnome_settings.sh");
+    script.push_str("systemctl disable \"apply_gnome_settings.service\"");
     Ok(script)
 }
 

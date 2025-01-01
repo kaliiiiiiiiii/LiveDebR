@@ -5,7 +5,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/lib/debr_util_scripts/snap-download-cache/installer.sh
+ExecStart=bash /lib/debr_util_scripts/snap-download-cache/installer.sh
 User=root
 Group=root
 StandardOutput=journal

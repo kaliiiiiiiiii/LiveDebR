@@ -1,3 +1,3 @@
 {
-    "snaps":["discord"]
+    "snaps":["core22", "gnome-42-2204", "bare", "gtk-common-themes","discord"]
 }

@@ -14,15 +14,15 @@ pub struct Config {
     pub archive_areas: Option<String>,
     pub recommends: Option<bool>,
     pub apt: Option<String>,
-    pub include: Option<HashSet<String>>,
-    pub purge: Option<HashSet<String>>,
+    pub include: Option<Vec<String>>,
+    pub purge: Option<Vec<String>>,
     pub snaps: Option<Vec<String>>,
 
     pub extras: Option<Vec<Extra>>,
     pub keyringer: Option<bool>,
     pub dark_mode: Option<bool>,
     pub de_boot_opts: Option<String>,
-    pub requires: Option<HashSet<String>>,
+    pub requires: Option<Vec<String>>,
     pub e_service: Option<HashSet<String>>,
     pub d_service: Option<HashSet<String>>,
 
@@ -52,9 +52,10 @@ pub fn merge(this_config:&Config, other_config: &Config) -> Result<Config, Box<d
                     this_map.insert(key.clone(), other_value.clone());
                 }
                 else if this_value.is_array() && other_value.is_array(){
-                    let mut mut_array = this_value.as_array().unwrap().clone();
-                    mut_array.extend_from_slice(other_value.as_array().unwrap());
-                    this_map.insert(key.clone(), serde_json::to_value(mut_array)?);
+                    let mut this_array= this_value.as_array().unwrap().clone();
+                    this_array.extend_from_slice(other_value.as_array().unwrap());
+                    let new_array = serde_json::to_value(this_array)?;
+                    this_map.insert(key.clone(), new_array);
                 }else if this_value != other_value {
                     return Err(format!("Conflict in `{}` field\nThisValue:\n{}\nOtherValue:\n{}", key, this_value, other_value).into());
                 }
@@ -109,7 +110,7 @@ pub fn read_config(path: &Path) -> Result<Config, Box<dyn Error>> {
     let mut config: Config = serde_json::from_reader(reader)?;
 
     if let Some(requires) = config.requires.clone() {
-        for required_path in requires {
+        for required_path in requires.iter() {
             config = add(&config, Path::new(&required_path))?;
         }
     }
