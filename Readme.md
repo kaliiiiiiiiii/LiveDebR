@@ -26,7 +26,11 @@ The usage can be found in [release](https://github.com/kaliiiiiiiiii/LiveDebR/re
 
 where config file should be in the form [config.json](https://github.com/kaliiiiiiiiii/LiveDebR/blob/main/config.json)
 
-> TODO: build propper docs
+## TODOS
+- [ ] Build propper docs
+- Add modules
+    - [ ] OneNote
+    - [ ] Autosetup Windows QUEMU VM
 
 # References
 
