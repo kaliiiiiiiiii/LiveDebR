@@ -141,8 +141,8 @@ pub fn gnome_set_dark() -> io::Result<String> {
     script.push_str("as-user  gsettings set org.gnome.shell favorite-apps \"['code_code.desktop', 'google-chrome.desktop', 'org.gnome.Terminal.desktop']\"\n");
     script.push_str("set -e\n");
     script.push_str("rm /etc/systemd/system/apply_gnome_settings.service\n");
-    script.push_str("rm /lib/debr_util_scripts/apply_gnome_settings.sh");
-    script.push_str("systemctl disable \"apply_gnome_settings.service\"");
+    script.push_str("rm /lib/debr_util_scripts/apply_gnome_settings.sh\n");
+    script.push_str("systemctl disable \"apply_gnome_settings.service\"\n");
     Ok(script)
 }
 
